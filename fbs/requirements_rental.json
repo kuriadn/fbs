@@ -1,0 +1,5 @@
+{
+    "industry": "rental",
+    "features": ["sales_management", "inventory_control", "accounting"],
+    "direct_modules": []
+} 
