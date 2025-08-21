@@ -1,8 +1,21 @@
-# Python
+# =============================================================================
+# FBS (Fayvad Business Suite) - Comprehensive .gitignore
+# =============================================================================
+# This file excludes sensitive data while preserving essential project files
+
+# =============================================================================
+# PYTHON STANDARD IGNORES
+# =============================================================================
+
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
+# C extensions
 *.so
+
+# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -16,85 +29,378 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
 MANIFEST
 
-# Django
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# =============================================================================
+# DJANGO SPECIFIC IGNORES
+# =============================================================================
+
+# Django logs
 *.log
+
+# Local settings (should use environment variables instead)
 local_settings.py
+
+# Django development database
 db.sqlite3
 db.sqlite3-journal
+
+# Media files (user uploads)
 media/
+
+# Static files (collected static files)
 staticfiles/
+static_collected/
 
-# Virtual Environment
-venv/
-env/
-ENV/
-env.bak/
-venv.bak/
+# Django migrations - KEEP THESE (commenting out common mistake)
+# migrations/
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# =============================================================================
+# ENVIRONMENT & CONFIGURATION
+# =============================================================================
 
-# OS
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Environment variables
+# Environment variables (CRITICAL - contains secrets)
 .env
 .env.local
 .env.development
 .env.test
 .env.production
+.env.staging
 
-# Logs
-logs/
-*.log
+# Python virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
 
-# Database
+# pipenv
+Pipfile.lock
+
+# =============================================================================
+# IDE & EDITOR FILES
+# =============================================================================
+
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# PyCharm
+.idea/
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+
+# Sublime Text
+*.sublime-workspace
+
+# =============================================================================
+# OPERATING SYSTEM FILES
+# =============================================================================
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+
+# =============================================================================
+# DATABASE FILES
+# =============================================================================
+
+# SQLite databases
 *.db
 *.sqlite3
+*.sqlite3-journal
 
-# Coverage
-.coverage
-htmlcov/
-.pytest_cache/
+# PostgreSQL
+postgresql.conf
+pg_hba.conf
+
+# Database dumps
+*.sql
+*.dump
+
+# =============================================================================
+# SECURITY & SECRETS
+# =============================================================================
+
+# SSH keys
+*.pem
+*.key
+id_rsa*
+id_dsa*
+id_ecdsa*
+id_ed25519*
+
+# SSL certificates
+*.crt
+*.cer
+*.p12
+*.pfx
+
+# Security scans
+.bandit
+security_report.json
+
+# =============================================================================
+# LOGS & TEMPORARY FILES
+# =============================================================================
+
+# Log files
+logs/
+*.log
+log/
 
 # Temporary files
 *.tmp
 *.temp
 .cache/
+.temporary/
 
-# FBS specific
+# Backup files
+*.backup
+*.bak
+*.orig
+
+# =============================================================================
+# TESTING & QUALITY ASSURANCE
+# =============================================================================
+
+# Coverage reports
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+
+# Test results
+test-results/
+test_results/
+junit.xml
+.testmondata
+
+# Performance testing
+locustfile.py
+
+# =============================================================================
+# DOCUMENTATION & BUILD
+# =============================================================================
+
+# Documentation builds
+docs/_build/
+docs/_static/
+docs/_templates/
+site/
+
+# Sphinx documentation
+docs/build/
+
+# =============================================================================
+# CONTAINERIZATION & DEPLOYMENT
+# =============================================================================
+
+# Docker
+# Uncomment if you want to exclude Docker files:
+# docker-compose*.yml
+# Dockerfile*
+# .dockerignore
+
+# Kubernetes
+# k8s/
+# *.yaml
+
+# =============================================================================
+# FBS SPECIFIC IGNORES
+# =============================================================================
+
+# Generated catalogs and discovery files
 module_catalog.json
-test_*.py
-check_*.py
-run_*.py
-run_*.sh
-setup.sh
-Makefile
-pytest.ini
-package.json
-docker-compose*.yml
-Dockerfile
-examples/
-tests/
-frontend/
-config/
-odoo/
+odoo_models_discovered.json
+service_registry.json
 
-# Documentation (keep only API docs)
-docs/
-!docs/api/ 
+# Auto-generated files (keep manually created ones)
+*_generated.py
+*_auto.py
+*_temp.py
+
+# Local development scripts
+dev_*.py
+dev_*.sh
+local_*.py
+local_*.sh
+
+# Odoo data dumps and exports
+odoo_data/
+odoo_exports/
+odoo_backups/
+
+# FBS cache and temporary data
+fbs_cache/
+fbs_temp/
+.fbs_cache/
+
+# Solution-specific databases (development)
+*_development.db
+*_test.db
+*_local.db
+
+# Local configuration overrides
+local_config.py
+dev_config.py
+
+# =============================================================================
+# KEEP IMPORTANT FILES (explicit inclusions)
+# =============================================================================
+
+# Keep essential configuration templates
+!fbs_app/config_template.py
+!env.example
+
+# Keep test files (critical for CI/CD)
+!fbs_app/tests/
+!*/tests/
+!test_*.py
+!*_test.py
+!*_tests.py
+
+# Keep documentation
+!docs/
+!*.md
+!*.rst
+
+# Keep build and CI configuration
+!Makefile
+!pytest.ini
+!setup.py
+!setup.cfg
+!pyproject.toml
+!requirements*.txt
+!tox.ini
+
+# Keep Docker files (useful for deployment)
+!Dockerfile
+!docker-compose*.yml
+!.dockerignore
+
+# Keep CI/CD files
+!.github/
+!.gitlab-ci.yml
+!.travis.yml
+!.circleci/
+
+# Keep package configuration
+!MANIFEST.in
+!LICENSE*
+!CHANGELOG*
+!AUTHORS*
+!CONTRIBUTORS*
+
+# =============================================================================
+# PROJECT SPECIFIC EXCEPTIONS
+# =============================================================================
+
+# Example files for users (keep these)
+!examples/
+!samples/
+
+# Important shell scripts
+!install.sh
+!setup.sh
+!deploy.sh
+
+# =============================================================================
+# DEVELOPMENT TOOLS
+# =============================================================================
+
+# Jupyter Notebooks checkpoints
+.ipynb_checkpoints
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# =============================================================================
+# MONITORING & ANALYTICS
+# =============================================================================
+
+# Application monitoring
+newrelic.ini
+*.pid
+
+# Error tracking
+sentry.properties
+
+# =============================================================================
+# END OF .gitignore
+# =============================================================================

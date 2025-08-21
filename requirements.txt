@@ -1,49 +1,46 @@
-# Django and Core
-Django==4.2.7
-djangorestframework==3.14.0
-django-cors-headers==4.3.1
-django-filter==23.3
+# Core Django dependencies
+Django>=4.2.0,<5.1.0
+psycopg2-binary>=2.9.0,<3.0.0
+django-cors-headers>=4.3.0,<5.0.0
+python-dateutil>=2.8.0,<3.0.0
 
-# Database
-psycopg2-binary==2.9.7
-dj-database-url==2.1.0
+# Testing Framework
+pytest>=7.4.0,<8.0.0
+pytest-django>=4.7.0,<5.0.0
+pytest-cov>=4.1.0,<5.0.0
+pytest-mock>=3.11.0,<4.0.0
+pytest-xdist>=3.3.0,<4.0.0  # Parallel testing
+pytest-benchmark>=4.0.0,<5.0.0  # Performance testing
 
-# Authentication & Security
-djangorestframework-simplejwt==5.3.0
-django-oauth-toolkit==2.2.0
-django-ratelimit==4.1.0
+# Test Data Generation
+factory-boy>=3.3.0,<4.0.0
+faker>=19.0.0,<20.0.0
+mixer>=7.1.0,<8.0.0
 
-# Odoo Integration
-xmlrpc-client==1.0.1
-requests==2.31.0
+# Code Quality & Coverage
+coverage>=7.3.0,<8.0.0
+pytest-cov>=4.1.0,<5.0.0
+black>=23.7.0,<24.0.0
+flake8>=6.0.0,<7.0.0
+isort>=5.12.0,<6.0.0
+mypy>=1.5.0,<2.0.0
 
-# API Documentation
-drf-yasg==1.21.7
-django-rest-swagger==2.2.0
+# Mocking & Stubbing
+responses>=0.23.0,<1.0.0  # HTTP mocking
+freezegun>=1.2.0,<2.0.0  # Time mocking
+httpx>=0.24.0,<1.0.0  # HTTP client for testing
 
-# Utilities
-python-decouple==3.8
-python-dotenv==1.0.0
-Pillow==10.0.1
+# Database Testing
+pytest-django-db>=0.1.0,<1.0.0
+django-test-plus>=1.4.0,<2.0.0
 
-# Production
-gunicorn==21.2.0
-whitenoise==6.6.0
+# Performance & Load Testing
+locust>=2.15.0,<3.0.0  # Load testing
+pytest-benchmark>=4.0.0,<5.0.0
 
-# Development (optional)
-django-debug-toolbar==4.2.0
-django-extensions==3.2.3
+# Security Testing
+bandit>=1.7.0,<2.0.0  # Security linting
+safety>=2.3.0,<3.0.0  # Dependency security
 
-# Monitoring & Logging
-sentry-sdk==1.38.0
-structlog==23.2.0
-
-# Testing
-pytest==7.4.3
-pytest-django==4.7.0
-factory-boy==3.3.0
-
-# Code Quality
-black==23.11.0
-flake8==6.1.0
-isort==5.12.0
+# Documentation Testing
+pytest-docstyle>=1.1.0,<2.0.0
