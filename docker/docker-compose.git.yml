@@ -1,0 +1,134 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.git
+      args:
+        FBS_REPO: ${FBS_REPO:-https://github.com/fayvad/fbs.git}
+        FBS_BRANCH: ${FBS_BRANCH:-main}
+        FBS_INSTALL_MODE: ${FBS_INSTALL_MODE:-install}
+    ports:
+      - "8000:8000"
+    environment:
+      - DJANGO_DEBUG=${DJANGO_DEBUG:-False}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DB_HOST=db
+      - DB_NAME=${DB_NAME:-fbs_system_db}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_PORT=${DB_PORT:-5432}
+      - ODOO_BASE_URL=${ODOO_BASE_URL:-http://odoo:8069}
+      - ODOO_DATABASE_USER=${ODOO_DATABASE_USER:-odoo}
+      - ODOO_DATABASE_PASSWORD=${ODOO_DATABASE_PASSWORD}
+      - FBS_ENABLE_MSME_FEATURES=${FBS_ENABLE_MSME_FEATURES:-true}
+      - FBS_ENABLE_BI_FEATURES=${FBS_ENABLE_BI_FEATURES:-true}
+      - FBS_ENABLE_WORKFLOW_FEATURES=${FBS_ENABLE_WORKFLOW_FEATURES:-true}
+      - FBS_ENABLE_COMPLIANCE_FEATURES=${FBS_ENABLE_COMPLIANCE_FEATURES:-true}
+      - FBS_ENABLE_ACCOUNTING_FEATURES=${FBS_ENABLE_ACCOUNTING_FEATURES:-true}
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./media:/app/media
+      - ./logs:/app/logs
+      - ./staticfiles:/app/staticfiles
+    networks:
+      - fbs_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import fbs_app; print('FBS is healthy')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=${DB_NAME:-fbs_system_db}
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d
+    networks:
+      - fbs_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - fbs_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  odoo:
+    image: odoo:16
+    environment:
+      - HOST=db
+      - USER=${DB_USER:-postgres}
+      - PASSWORD=${DB_PASSWORD}
+      - DB_PORT=${DB_PORT:-5432}
+    ports:
+      - "8069:8069"
+    depends_on:
+      - db
+    volumes:
+      - odoo_data:/var/lib/odoo
+      - ./docker/odoo/addons:/mnt/extra-addons
+    networks:
+      - fbs_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8069/web/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./staticfiles:/app/staticfiles:ro
+      - ./media:/app/media:ro
+      - ./docker/nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - web
+    networks:
+      - fbs_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  odoo_data:
+    driver: local
+
+networks:
+  fbs_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

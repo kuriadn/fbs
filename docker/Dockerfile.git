@@ -1,0 +1,63 @@
+# Dockerfile for installing FBS from Git source
+# This is an example for projects that want to install FBS from Git
+
+FROM python:3.10-slim
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PIP_NO_CACHE_DIR=1
+
+# Set work directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    postgresql-client \
+    libpq-dev \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install FBS from Git (you can customize these)
+ARG FBS_REPO=https://github.com/fayvad/fbs.git
+ARG FBS_BRANCH=main
+ARG FBS_INSTALL_MODE=install
+
+# Install FBS based on mode
+RUN if [ "$FBS_INSTALL_MODE" = "editable" ]; then \
+        pip install -e "git+$FBS_REPO@$FBS_BRANCH#egg=fbs-app"; \
+    elif [ "$FBS_INSTALL_MODE" = "clone" ]; then \
+        git clone -b "$FBS_BRANCH" "$FBS_REPO" /tmp/fbs && \
+        cd /tmp/fbs && \
+        pip install -e . && \
+        rm -rf /tmp/fbs; \
+    else \
+        pip install "git+$FBS_REPO@$FBS_BRANCH"; \
+    fi
+
+# Copy your project requirements
+COPY requirements.txt .
+
+# Install your project dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy your Django project
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p /app/media /app/staticfiles /app/logs
+
+# Set permissions
+RUN chmod +x /app/scripts/*.sh 2>/dev/null || true
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD python -c "import fbs_app; print('FBS is healthy')" || exit 1
+
+# Default command
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

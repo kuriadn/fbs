@@ -99,6 +99,64 @@ The FBS project follows a **clean, service-oriented architecture** with proper s
 
 ## 🚀 Quick Start
 
+### **Option 1: Install from Git (Recommended for Development)**
+
+```bash
+# Install directly from Git
+pip install git+https://github.com/fayvad/fbs.git
+
+# Install from specific branch
+pip install git+https://github.com/fayvad/fbs.git@develop
+
+# Install in editable mode (for development)
+pip install -e git+https://github.com/fayvad/fbs.git#egg=fbs-app
+```
+
+### **Option 2: Install from PyPI (Production)**
+
+```bash
+pip install fbs-app==2.0.0
+```
+
+### **Option 3: Clone and Install**
+
+```bash
+git clone https://github.com/fayvad/fbs.git
+cd fbs
+pip install -e .
+```
+
+### **Quick Setup**
+
+1. **Add to Django Settings**
+```python
+INSTALLED_APPS = [
+    # ... other apps ...
+    'fbs_app.apps.FBSAppConfig',
+]
+
+# Configure FBS
+FBS_APP = {
+    'ODOO_BASE_URL': 'http://localhost:8069',
+    'DATABASE_USER': 'odoo',
+    'DATABASE_PASSWORD': 'your_password',
+}
+```
+
+2. **Run Migrations**
+```bash
+python manage.py migrate
+```
+
+3. **Test Installation**
+```python
+from fbs_app.interfaces import FBSInterface
+fbs = FBSInterface('my_solution')
+print(fbs.get_system_health())
+```
+
+**For detailed Git installation instructions, see [docs/QUICK_START_GIT.md](docs/QUICK_START_GIT.md)**
+
 ### 1. Install the App
 
 ```bash
