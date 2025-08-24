@@ -17,7 +17,8 @@ logger = logging.getLogger('fbs_app')
 class CacheService:
     """Service for managing application caching"""
     
-    def __init__(self):
+    def __init__(self, solution_name: str):
+        self.solution_name = solution_name
         self.fbs_config = getattr(settings, 'FBS_APP', {})
         self.cache_enabled = self.fbs_config.get('CACHE_ENABLED', True)
         self.default_timeout = self.fbs_config.get('CACHE_TIMEOUT', 300)  # 5 minutes
@@ -29,14 +30,16 @@ class CacheService:
             return default
         
         try:
-            value = cache.get(key)
+            # Scope cache key to this solution
+            solution_key = f"{self.solution_name}:{key}"
+            value = cache.get(solution_key)
             if value is not None:
-                logger.debug(f"Cache hit for key: {key}")
+                logger.debug(f"Cache hit for solution {self.solution_name}, key: {key}")
             else:
-                logger.debug(f"Cache miss for key: {key}")
+                logger.debug(f"Cache miss for solution {self.solution_name}, key: {key}")
             return value
         except Exception as e:
-            logger.warning(f"Cache get error for key {key}: {str(e)}")
+            logger.warning(f"Cache get error for solution {self.solution_name}, key {key}: {str(e)}")
             return default
     
     def set(self, key: str, value, timeout: int = None):
@@ -46,11 +49,13 @@ class CacheService:
         
         try:
             timeout = timeout or self.default_timeout
-            cache.set(key, value, timeout)
-            logger.debug(f"Cache set for key: {key} with timeout: {timeout}s")
+            # Scope cache key to this solution
+            solution_key = f"{self.solution_name}:{key}"
+            cache.set(solution_key, value, timeout)
+            logger.debug(f"Cache set for solution {self.solution_name}, key: {key} with timeout: {timeout}s")
             return True
         except Exception as e:
-            logger.warning(f"Cache set error for key {key}: {str(e)}")
+            logger.warning(f"Cache set error for solution {self.solution_name}, key {key}: {str(e)}")
             return False
     
     def delete(self, key: str):
@@ -59,11 +64,13 @@ class CacheService:
             return False
         
         try:
-            cache.delete(key)
-            logger.debug(f"Cache delete for key: {key}")
+            # Scope cache key to this solution
+            solution_key = f"{self.solution_name}:{key}"
+            cache.delete(solution_key)
+            logger.debug(f"Cache delete for solution {self.solution_name}, key: {key}")
             return True
         except Exception as e:
-            logger.warning(f"Cache delete error for key {key}: {str(e)}")
+            logger.warning(f"Cache delete error for solution {self.solution_name}, key {key}: {str(e)}")
             return False
     
     def get_or_set(self, key: str, default_func, timeout: int = None):
@@ -72,24 +79,26 @@ class CacheService:
             return default_func()
         
         try:
-            value = cache.get(key)
+            # Scope cache key to this solution
+            solution_key = f"{self.solution_name}:{key}"
+            value = cache.get(solution_key)
             if value is not None:
-                logger.debug(f"Cache hit for key: {key}")
+                logger.debug(f"Cache hit for solution {self.solution_name}, key: {key}")
                 return value
             
             # Value not in cache, compute it
-            logger.debug(f"Cache miss for key: {key}, computing value")
+            logger.debug(f"Cache miss for solution {self.solution_name}, key: {key}, computing value")
             value = default_func()
             
             # Store in cache
             timeout = timeout or self.default_timeout
-            cache.set(key, value, timeout)
-            logger.debug(f"Cache set for key: {key} with timeout: {timeout}s")
+            cache.set(solution_key, value, timeout)
+            logger.debug(f"Cache set for solution {self.solution_name}, key: {key} with timeout: {timeout}s")
             
             return value
             
         except Exception as e:
-            logger.warning(f"Cache get_or_set error for key {key}: {str(e)}")
+            logger.warning(f"Cache get_or_set error for solution {self.solution_name}, key {key}: {str(e)}")
             return default_func()
     
     def get_many(self, keys: list):

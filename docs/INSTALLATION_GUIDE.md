@@ -1,17 +1,31 @@
-# FBS App Installation Guide
+# FBS Comprehensive Installation Guide
 
-**FBS (Fayvad Business Suite)** - Embeddable Django App for MSME Business Management
+**FBS (Fayvad Business Suite)** - Complete Django App Ecosystem for MSME Business Management
 
 ## Overview
 
-This guide explains how to install and configure the FBS app in your existing Django project. The FBS app provides comprehensive MSME business management capabilities including:
+This guide explains how to install and configure the complete FBS ecosystem in your existing Django project. The FBS ecosystem consists of three integrated apps:
 
+### **FBS App (Core Business Suite)**
 - **Business Intelligence & Analytics**
 - **Workflow Management**
 - **Compliance Management**
 - **Basic Accounting**
 - **MSME Business Tools**
 - **Odoo ERP Integration**
+
+### **FBS DMS (Document Management System)**
+- **Document Storage & Management**
+- **Workflow Approvals**
+- **File Attachments**
+- **Search & Filtering**
+- **Odoo Synchronization**
+
+### **FBS License Manager**
+- **Feature Control & Licensing**
+- **Usage Tracking & Limits**
+- **Upgrade Prompts**
+- **Commercial Deployment Support**
 
 ## Prerequisites
 
@@ -23,32 +37,39 @@ This guide explains how to install and configure the FBS app in your existing Dj
 
 ## Installation Methods
 
-### Method 1: Install from PyPI (Recommended)
+### Method 1: Install from Source (Recommended)
 
 ```bash
-pip install fbs-app
-```
+# Clone the complete FBS repository
+git clone https://github.com/kuriadn/fbs.git
+cd fbs
 
-### Method 2: Install from Source
-
-```bash
-# Clone the repository
-git clone https://github.com/fayvad/fbs-app.git
-cd fbs-app
-
-# Install in development mode
+# Install all three apps in development mode
 pip install -e .
 ```
 
-### Method 3: Manual Installation
+### Method 2: Manual Installation
 
 ```bash
-# Copy the fbs_app directory to your Django project
+# Copy all three app directories to your Django project
 cp -r fbs_app/ /path/to/your/django/project/
+cp -r fbs_dms/ /path/to/your/django/project/
+cp -r fbs_license_manager/ /path/to/your/django/project/
 
 # Or add to your project's apps directory
 mkdir -p /path/to/your/django/project/apps/
 cp -r fbs_app/ /path/to/your/django/project/apps/
+cp -r fbs_dms/ /path/to/your/django/project/apps/
+cp -r fbs_license_manager/ /path/to/your/django/project/apps/
+```
+
+### Method 3: Individual App Installation
+
+```bash
+# Install individual apps if needed
+pip install -e fbs_app/
+pip install -e fbs_dms/
+pip install -e fbs_license_manager/
 ```
 
 ## Django Project Configuration
@@ -71,8 +92,10 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'corsheaders',
     
-    # FBS App
-    'fbs_app.apps.FBSAppConfig',
+    # FBS Ecosystem
+    'fbs_app.apps.FBSAppConfig',           # Core business suite
+    'fbs_dms.apps.FBSDMSConfig',           # Document management
+    'fbs_license_manager.apps.FBSLicenseManagerConfig',  # License management
 ]
 ```
 

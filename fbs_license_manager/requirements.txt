@@ -1,0 +1,17 @@
+# FBS License Manager Dependencies
+
+# Core Django
+Django>=3.2,<5.0
+
+# Security
+cryptography>=3.4.8
+
+# FBS Integration
+fbs-app>=1.0.0
+
+# Development
+pytest>=6.0
+pytest-django>=4.0
+black>=22.0
+flake8>=4.0
+mypy>=0.950

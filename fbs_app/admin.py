@@ -15,9 +15,11 @@ from .models.core import (
     CacheEntry, Handshake, Notification, ApprovalRequest, ApprovalResponse
 )
 from .models.msme import (
-    MSMESetupWizard, MSMEKPI, MSMECompliance, MSMEMarketing,
+    MSMESetupWizard, MSMEKPI, MSMECompliance, MSMEMarketing, 
     MSMETemplate, MSMEAnalytics
 )
+
+# Licensing Models - Now handled by fbs_license_manager app
 from .models.core import CustomField
 from .models.discovery import OdooModel, OdooField, OdooModule
 from .models.workflows import (
@@ -114,6 +116,9 @@ class ApprovalResponseAdmin(admin.ModelAdmin):
     search_fields = ['approval_request__title', 'responder__username']
     readonly_fields = ['created_at']
     ordering = ['-created_at']
+
+
+# Licensing Models Admin - Now handled by fbs_license_manager app
 
 
 # MSME Models Admin

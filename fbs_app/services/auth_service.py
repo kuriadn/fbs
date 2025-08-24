@@ -17,11 +17,12 @@ logger = logging.getLogger('fbs_app')
 class AuthService:
     """Service for managing authentication and handshakes"""
     
-    def __init__(self):
+    def __init__(self, solution_name: str):
+        self.solution_name = solution_name
         self.fbs_config = getattr(settings, 'FBS_APP', {})
         self.handshake_expiry_hours = self.fbs_config.get('HANDSHAKE_EXPIRY_HOURS', 24)
     
-    def create_handshake(self, solution_name: str, secret_key: str = None, expiry_hours: int = None) -> dict:
+    def create_handshake(self, secret_key: str = None, expiry_hours: int = None) -> dict:
         """Create a new handshake for system authentication"""
         try:
             from ..models import Handshake
@@ -38,7 +39,7 @@ class AuthService:
             # Create handshake
             handshake = Handshake.objects.create(
                 handshake_id=handshake_id,
-                solution_name=solution_name,
+                solution_name=self.solution_name,
                 secret_key=secret_key,
                 status='pending',
                 expires_at=expires_at
@@ -70,10 +71,11 @@ class AuthService:
         try:
             from ..models import Handshake
             
-            # Find handshake
+            # Find handshake for this solution
             handshake = Handshake.objects.get(
                 handshake_id=handshake_id,
-                status='active'
+                status='active',
+                solution_name=self.solution_name
             )
             
             # Validate secret key
@@ -256,10 +258,9 @@ class AuthService:
             token_mapping = TokenMapping.objects.create(
                 user=user,
                 database=database,
-                odoo_token=odoo_token,
-                odoo_user_id=odoo_user_id,
+                token=odoo_token,
                 expires_at=expires_at,
-                active=True
+                is_active=True
             )
             
             logger.info(f"Created token mapping for {user.username} -> {database_name}")

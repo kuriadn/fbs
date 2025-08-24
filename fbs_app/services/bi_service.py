@@ -33,7 +33,7 @@ class BusinessIntelligenceService:
                 dashboard_type=dashboard_data.get('dashboard_type', 'general'),
                 description=dashboard_data.get('description', ''),
                 is_active=dashboard_data.get('is_active', True),
-                created_by=dashboard_data.get('created_by', 1)
+                created_by=dashboard_data.get('created_by')
             )
             
             return {

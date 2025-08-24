@@ -17,7 +17,8 @@ logger = logging.getLogger('fbs_app')
 class OnboardingService:
     """Service for client onboarding and self-service setup"""
     
-    def __init__(self):
+    def __init__(self, solution_name: str):
+        self.solution_name = solution_name
         self.fbs_config = getattr(settings, 'FBS_APP', {})
     
     def start_onboarding(self, business_type: str, business_name: str, 
@@ -33,7 +34,7 @@ class OnboardingService:
             # Create onboarding wizard record
             from ..models import MSMESetupWizard
             wizard = MSMESetupWizard.objects.create(
-                solution_name=solution_name,
+                solution_name=self.solution_name,
                 business_type=business_type,
                 setup_status='pending',
                 preconfigured_data={

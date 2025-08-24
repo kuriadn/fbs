@@ -29,7 +29,7 @@ class MSMEService:
             wizard = MSMESetupWizard.objects.create(
                 solution_name=self.solution_name,
                 business_type=business_type,
-                setup_status='in_progress'
+                status='in_progress'
             )
             
             # Get pre-configured data
@@ -41,20 +41,20 @@ class MSMEService:
             result = self._install_and_configure(business_type, preconfigured_data, request)
             
             if result['success']:
-                wizard.setup_status = 'completed'
+                wizard.status = 'completed'
                 wizard.completed_at = timezone.now()
-                wizard.setup_log = result.get('log', [])
+                wizard.configuration = result.get('log', [])
             else:
-                wizard.setup_status = 'failed'
-                wizard.setup_log = result.get('errors', [])
+                wizard.status = 'failed'
+                wizard.configuration = result.get('errors', [])
             
             wizard.save()
             
             return {
                 'success': result['success'],
                 'wizard_id': wizard.id,
-                'setup_status': wizard.setup_status,
-                'log': wizard.setup_log
+                'status': wizard.status,
+                'log': wizard.configuration
             }
             
         except Exception as e:

@@ -34,13 +34,15 @@ class SimpleAccountingService:
             
             # Create cash entry
             entry = CashEntry.objects.create(
-                solution_name=self.solution_name,
+                business_id=self.solution_name,
+                entry_date=timezone.now().date(),
                 entry_type=entry_type,  # 'income' or 'expense'
                 amount=amount,
                 description=description,
                 category=category,
-                date=date,
-                created_at=timezone.now()
+                subcategory='',
+                payment_method='cash',
+                reference_number=''
             )
             
             return {

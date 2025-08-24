@@ -44,16 +44,18 @@ The FBS app transforms your Django solutions into **Odoo-powered business applic
 
 ## 🚀 **Installation & Setup**
 
-### **1. Install FBS App**
+### **1. Install Complete FBS Ecosystem**
 
 ```bash
-# From PyPI (recommended)
-pip install fbs-app
-
-# Or from source
-git clone https://github.com/fayvad/fbs-app.git
-cd fbs-app
+# From source (recommended)
+git clone https://github.com/kuriadn/fbs.git
+cd fbs
 pip install -e .
+
+# Or install individual apps
+pip install -e fbs_app/
+pip install -e fbs_dms/
+pip install -e fbs_license_manager/
 ```
 
 ### **2. Add to Your Django Project**
@@ -65,8 +67,10 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     # ... other apps
     
-    # FBS App - Your Odoo Integration Layer
-    'fbs_app.apps.FBSAppConfig',
+    # FBS Ecosystem - Your Complete Odoo Integration Layer
+    'fbs_app.apps.FBSAppConfig',           # Core business suite
+    'fbs_dms.apps.FBSDMSConfig',           # Document management
+    'fbs_license_manager.apps.FBSLicenseManagerConfig',  # License management
 ]
 
 MIDDLEWARE = [

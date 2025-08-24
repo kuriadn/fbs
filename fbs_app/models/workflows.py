@@ -32,6 +32,7 @@ class WorkflowDefinition(models.Model):
     trigger_conditions = models.JSONField(default=dict)  # When to start workflow
     workflow_data = models.JSONField(default=dict)  # Workflow configuration
     estimated_duration = models.IntegerField(help_text='Estimated duration in hours', null=True, blank=True)
+    solution_name = models.CharField(max_length=100, help_text='Solution this workflow belongs to')
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -39,8 +40,12 @@ class WorkflowDefinition(models.Model):
     class Meta:
         app_label = 'fbs_app'
         db_table = 'fbs_workflow_definitions'
-        unique_together = ['name', 'version']
+        unique_together = ['name', 'version', 'solution_name']
         ordering = ['workflow_type', 'name']
+        indexes = [
+            models.Index(fields=['solution_name', 'workflow_type']),
+            models.Index(fields=['solution_name', 'is_active']),
+        ]
     
     def __str__(self):
         return f"{self.name} v{self.version} ({self.workflow_type})"
@@ -67,6 +72,7 @@ class WorkflowInstance(models.Model):
     current_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     workflow_data = models.JSONField(default=dict)  # Instance-specific data
     notes = models.TextField(blank=True)
+    solution_name = models.CharField(max_length=100, help_text='Solution this workflow instance belongs to')
     
     class Meta:
         app_label = 'fbs_app'
@@ -75,6 +81,8 @@ class WorkflowInstance(models.Model):
         indexes = [
             models.Index(fields=['business_id', 'status']),
             models.Index(fields=['current_user', 'status']),
+            models.Index(fields=['solution_name', 'status']),
+            models.Index(fields=['solution_name', 'business_id']),
         ]
     
     def __str__(self):

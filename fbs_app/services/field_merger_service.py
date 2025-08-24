@@ -16,8 +16,10 @@ logger = logging.getLogger('fbs_app')
 class FieldMergerService:
     """Service for merging Odoo fields with custom Django fields"""
     
-    @staticmethod
-    def split_fields_by_source(model_name: str, requested_fields: List[str], 
+    def __init__(self, solution_name: str):
+        self.solution_name = solution_name
+    
+    def split_fields_by_source(self, model_name: str, requested_fields: List[str], 
                               available_odoo_fields: List[str], database_name: str) -> Tuple[List[str], List[str]]:
         """
         Split requested fields into Odoo fields and custom fields
@@ -46,8 +48,7 @@ class FieldMergerService:
         
         return odoo_fields, custom_fields
     
-    @staticmethod
-    def merge_odoo_and_custom_data(odoo_data: List[Dict], custom_fields: List[str], 
+    def merge_odoo_and_custom_data(self, odoo_data: List[Dict], custom_fields: List[str], 
                                   model_name: str, database_name: str) -> List[Dict]:
         """
         Merge Odoo data with custom field data
@@ -90,8 +91,7 @@ class FieldMergerService:
         logger.info(f"Merged {len(custom_fields)} custom fields for {len(record_ids)} records in {model_name}")
         return merged_data
     
-    @staticmethod
-    def handle_missing_fields_in_domain(domain: List, model_name: str, 
+    def handle_missing_fields_in_domain(self, domain: List, model_name: str, 
                                       available_odoo_fields: List[str], database_name: str) -> Tuple[List, List]:
         """
         Handle missing fields in domain by splitting into valid and invalid conditions
@@ -137,8 +137,7 @@ class FieldMergerService:
         
         return valid_conditions, invalid_conditions
     
-    @staticmethod
-    def _get_custom_fields(model_name: str, record_ids: List[int], 
+    def _get_custom_fields(self, model_name: str, record_ids: List[int], 
                           field_names: List[str], database_name: str) -> Dict[int, Dict[str, Any]]:
         """
         Get custom field values for specific records
@@ -178,8 +177,7 @@ class FieldMergerService:
             logger.error(f"Error getting custom fields: {str(e)}")
             return {}
     
-    @staticmethod
-    def _is_custom_field(field_name: str, model_name: str, database_name: str) -> bool:
+    def _is_custom_field(self, field_name: str, model_name: str, database_name: str) -> bool:
         """
         Check if a field is a custom field
         
@@ -204,8 +202,7 @@ class FieldMergerService:
             logger.error(f"Error checking if field is custom: {str(e)}")
             return False
     
-    @staticmethod
-    def _convert_to_custom_field_condition(field_name: str, operator: str, value: Any, 
+    def _convert_to_custom_field_condition(self, field_name: str, operator: str, value: Any, 
                                          model_name: str, database_name: str) -> List:
         """
         Convert Odoo domain condition to custom field condition
@@ -245,8 +242,7 @@ class FieldMergerService:
         else:
             return ['custom_field', field_name, django_operator, value]
     
-    @staticmethod
-    def create_custom_field(model_name: str, record_id: int, field_name: str, 
+    def create_custom_field(self, model_name: str, record_id: int, field_name: str, 
                            field_value: Any, database_name: str) -> Dict[str, Any]:
         """
         Create a custom field value
@@ -292,8 +288,7 @@ class FieldMergerService:
                 'error': str(e)
             }
     
-    @staticmethod
-    def update_custom_field(custom_field_id: int, field_value: Any) -> Dict[str, Any]:
+    def update_custom_field(self, custom_field_id: int, field_value: Any) -> Dict[str, Any]:
         """
         Update a custom field value
         
@@ -332,8 +327,7 @@ class FieldMergerService:
                 'error': str(e)
             }
     
-    @staticmethod
-    def delete_custom_field(custom_field_id: int) -> Dict[str, Any]:
+    def delete_custom_field(self, custom_field_id: int) -> Dict[str, Any]:
         """
         Delete a custom field
         
@@ -369,8 +363,7 @@ class FieldMergerService:
                 'error': str(e)
             }
     
-    @staticmethod
-    def get_custom_field_schema(model_name: str, database_name: str) -> Dict[str, Any]:
+    def get_custom_field_schema(self, model_name: str, database_name: str) -> Dict[str, Any]:
         """
         Get custom field schema for a model
         
@@ -415,8 +408,7 @@ class FieldMergerService:
                 'error': str(e)
             }
     
-    @staticmethod
-    def bulk_update_custom_fields(updates: List[Dict]) -> Dict[str, Any]:
+    def bulk_update_custom_fields(self, updates: List[Dict]) -> Dict[str, Any]:
         """
         Bulk update custom fields
         
@@ -445,7 +437,7 @@ class FieldMergerService:
                     continue
                 
                 # Create or update custom field
-                result = FieldMergerService.create_custom_field(
+                result = self.create_custom_field(
                     model_name, record_id, field_name, field_value, database_name
                 )
                 

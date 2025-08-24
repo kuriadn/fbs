@@ -27,6 +27,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'fbs_app',  # Our embeddable FBS app
+    'fbs_license_manager',  # Standalone license management
+    'fbs_dms',  # Document management system
 ]
 
 MIDDLEWARE = [
@@ -64,7 +66,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'fbs_project.wsgi.application'
 
-# Database - PostgreSQL setup
+# Database - Multi-database setup
 DATABASES = {
     'default': {
         'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.postgresql'),
@@ -73,7 +75,18 @@ DATABASES = {
         'PASSWORD': os.environ.get('DB_PASSWORD', 'four@One2'),
         'HOST': os.environ.get('DB_HOST', 'localhost'),
         'PORT': os.environ.get('DB_PORT', '5432'),
+    },
+    'licensing': {
+        'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.postgresql'),
+        'NAME': os.environ.get('LIC_DB_NAME', 'lic_system_db'),
+        'USER': os.environ.get('DB_USER', 'odoo'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'four@One2'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
     }
+    # Solution-specific databases (djo_{solution}_db, fbs_{solution}_db)
+    # are created by the solution implementation and added to settings
+    # by the solution, not by FBS apps
 }
 
 # Database Routers

@@ -16,7 +16,8 @@ logger = logging.getLogger('fbs_app')
 class WorkflowService:
     """Service for managing business workflows and process automation"""
     
-    def __init__(self):
+    def __init__(self, solution_name: str):
+        self.solution_name = solution_name
         self.fbs_config = getattr(settings, 'FBS_APP', {})
     
     def create_workflow_instance(self, workflow_definition_id: int, record_id: int, 
@@ -407,7 +408,8 @@ class WorkflowService:
                 trigger_conditions=workflow_data.get('trigger_conditions', {}),
                 workflow_data=workflow_data.get('workflow_data', {}),
                 estimated_duration=workflow_data.get('estimated_duration'),
-                created_by=workflow_data.get('created_by')
+                created_by=workflow_data.get('created_by'),
+                solution_name=self.solution_name
             )
             
             return {
@@ -431,7 +433,7 @@ class WorkflowService:
         try:
             from ..models import WorkflowDefinition
             
-            query = {'is_active': True}
+            query = {'is_active': True, 'solution_name': self.solution_name}
             if workflow_type:
                 query['workflow_type'] = workflow_type
             
@@ -471,7 +473,8 @@ class WorkflowService:
                 business_id=initial_data.get('business_id', 'default'),
                 status='active',
                 workflow_data=initial_data.get('workflow_data', {}),
-                notes=initial_data.get('notes', '')
+                notes=initial_data.get('notes', ''),
+                solution_name=self.solution_name
             )
             
             return {

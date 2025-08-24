@@ -18,7 +18,7 @@ class TestWorkflowService(TestCase):
     
     def setUp(self):
         """Set up test data"""
-        self.service = WorkflowService()
+        self.service = WorkflowService(solution_name='test_solution')
         
         # Create test user
         self.user = User.objects.create_user(

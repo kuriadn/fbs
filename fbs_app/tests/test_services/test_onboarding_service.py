@@ -16,7 +16,7 @@ class TestOnboardingService(TestCase):
     
     def setUp(self):
         """Set up test fixtures"""
-        self.service = OnboardingService()
+        self.service = OnboardingService(solution_name='test_solution')
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',

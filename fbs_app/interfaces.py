@@ -542,20 +542,70 @@ class AccountingInterface:
 class FBSInterface:
     """Main interface for all FBS app capabilities"""
     
-    def __init__(self, solution_name: str):
+    def __init__(self, solution_name: str, license_key: str = None):
         self.solution_name = solution_name
+        self.license_key = license_key
         
-        # Initialize all interfaces
-        self.msme = MSMEInterface(solution_name)
-        self.accounting = AccountingInterface(solution_name)
-        self.bi = BusinessIntelligenceInterface(solution_name)
-        self.workflows = WorkflowInterface(solution_name)
-        self.compliance = ComplianceInterface(solution_name)
-        self.notifications = NotificationInterface(solution_name)
-        self.onboarding = OnboardingInterface(solution_name)
+        # Initialize licensing system (optional)
+        if license_key is None:
+            # No license key provided - use no licensing mode
+            self.license_manager = None
+            self.feature_flags = None
+            self._licensing_available = False
+        else:
+            try:
+                from fbs_license_manager import LicenseManager, FeatureFlags
+                self.license_manager = LicenseManager(solution_name, license_key)
+                self.feature_flags = FeatureFlags(solution_name, self.license_manager)
+                self._licensing_available = True
+            except ImportError:
+                # Fallback to no licensing
+                self.license_manager = None
+                self.feature_flags = None
+                self._licensing_available = False
+        
+        # Initialize core interfaces (always available)
         self.odoo = OdooIntegrationInterface(solution_name)
-        self.fields = VirtualFieldsInterface(solution_name)
-        self.cache = CacheInterface(solution_name)
+        
+        # Initialize licensed interfaces conditionally
+        if self._licensing_available and self.feature_flags:
+            if self.feature_flags.is_enabled('msme'):
+                self.msme = MSMEInterface(solution_name)
+            
+            if self.feature_flags.is_enabled('bi'):
+                self.bi = BusinessIntelligenceInterface(solution_name)
+            
+            if self.feature_flags.is_enabled('workflows'):
+                self.workflows = WorkflowInterface(solution_name)
+            
+            if self.feature_flags.is_enabled('compliance'):
+                self.compliance = ComplianceInterface(solution_name)
+            
+            if self.feature_flags.is_enabled('accounting'):
+                self.accounting = AccountingInterface(solution_name)
+            
+            if self.feature_flags.is_enabled('notifications'):
+                self.notifications = NotificationInterface(solution_name)
+            
+            if self.feature_flags.is_enabled('onboarding'):
+                self.onboarding = OnboardingInterface(solution_name)
+            
+            if self.feature_flags.is_enabled('fields'):
+                self.fields = VirtualFieldsInterface(solution_name)
+            
+            if self.feature_flags.is_enabled('cache'):
+                self.cache = CacheInterface(solution_name)
+        else:
+            # No licensing - initialize all interfaces
+            self.msme = MSMEInterface(solution_name)
+            self.bi = BusinessIntelligenceInterface(solution_name)
+            self.workflows = WorkflowInterface(solution_name)
+            self.compliance = ComplianceInterface(solution_name)
+            self.accounting = AccountingInterface(solution_name)
+            self.notifications = NotificationInterface(solution_name)
+            self.onboarding = OnboardingInterface(solution_name)
+            self.fields = VirtualFieldsInterface(solution_name)
+            self.cache = CacheInterface(solution_name)
     
     def get_solution_info(self) -> Dict[str, Any]:
         """Get solution information"""
@@ -595,9 +645,86 @@ class FBSInterface:
                 'cache': 'operational'
             }
         }
+    
+    def get_license_info(self) -> Dict[str, Any]:
+        """Get comprehensive license information"""
+        if self._licensing_available and self.license_manager:
+            return self.license_manager.get_license_info()
+        else:
+            return {
+                'license_type': 'unlimited',
+                'status': 'active',
+                'features': ['all_features'],
+                'limits': {'unlimited': True},
+                'expiry_date': None,
+                'source': 'unlimited'
+            }
+    
+    def get_odoo_client(self):
+        """Get the Odoo client for direct access"""
+        return self.odoo._odoo_client
+    
+    def is_odoo_available(self) -> bool:
+        """Check if Odoo integration is available"""
+        try:
+            return self.odoo._odoo_client.is_available()
+        except Exception:
+            return False
+    
+    def check_feature_access(self, feature_name: str, **kwargs) -> Dict[str, Any]:
+        """Check if user can access a feature"""
+        if self._licensing_available and self.feature_flags:
+            return self.feature_flags.check_feature_access(feature_name, **kwargs)
+        else:
+            return {
+                'access': True,
+                'remaining': -1,
+                'limit': -1,
+                'feature_name': feature_name,
+                'licensing_available': False
+            }
+    
+    def get_upgrade_prompt(self, feature_name: str) -> Dict[str, Any]:
+        """Get upgrade prompt for a feature"""
+        if self._licensing_available and self.license_manager:
+            try:
+                from fbs_license_manager import UpgradePrompts
+                upgrade_prompts = UpgradePrompts(self.license_manager)
+                return upgrade_prompts.get_upgrade_prompt(feature_name)
+            except ImportError:
+                pass
+        
+        return {'upgrade_required': False, 'message': 'No licensing system available'}
+    
+    def get_feature_matrix(self) -> Dict[str, Dict[str, Any]]:
+        """Get complete feature availability matrix"""
+        if self._licensing_available and self.feature_flags:
+            return self.feature_flags.get_feature_matrix()
+        else:
+            return {
+                'all_features': {
+                    'enabled': True,
+                    'limit': -1,
+                    'unlimited': True,
+                    'dependencies_met': True,
+                    'missing_dependencies': []
+                }
+            }
+    
+    def get_upgrade_analysis(self) -> Dict[str, Any]:
+        """Get comprehensive upgrade analysis"""
+        if self._licensing_available and self.license_manager:
+            try:
+                from fbs_license_manager import UpgradePrompts
+                upgrade_prompts = UpgradePrompts(self.license_manager)
+                return upgrade_prompts.get_comprehensive_upgrade_analysis()
+            except ImportError:
+                pass
+        
+        return {'analysis': 'No licensing system available'}
 
 
 # Convenience function for quick access
-def get_fbs_interface(solution_name: str) -> FBSInterface:
+def get_fbs_interface(solution_name: str, license_key: str = None) -> FBSInterface:
     """Get FBS interface for a solution"""
-    return FBSInterface(solution_name)
+    return FBSInterface(solution_name, license_key)
