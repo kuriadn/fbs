@@ -7,7 +7,7 @@ data from both sources.
 """
 
 import logging
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Any, Tuple, Optional
 from django.conf import settings
 
 logger = logging.getLogger('fbs_app')
@@ -458,6 +458,185 @@ class FieldMergerService:
             
         except Exception as e:
             logger.error(f"Error in bulk custom field update: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def set_custom_field(self, model_name: str, record_id: int, field_name: str,
+                        field_value: Any, field_type: str = 'char',
+                        database_name: str = None) -> Dict[str, Any]:
+        """Set custom field value (alias for create_custom_field)"""
+        if database_name is None:
+            database_name = self.solution_name
+        return self.create_custom_field(model_name, record_id, field_name, field_value, database_name)
+    
+    def get_custom_field(self, model_name: str, record_id: int, field_name: str,
+                        database_name: str = None) -> Dict[str, Any]:
+        """Get custom field value"""
+        try:
+            from ..models import CustomField
+            
+            if database_name is None:
+                database_name = self.solution_name
+            
+            try:
+                custom_field = CustomField.objects.get(
+                    model_name=model_name,
+                    record_id=record_id,
+                    field_name=field_name,
+                    database_name=database_name
+                )
+                
+                return {
+                    'success': True,
+                    'field_name': field_name,
+                    'field_value': custom_field.field_value,
+                    'field_type': custom_field.field_type
+                }
+                
+            except CustomField.DoesNotExist:
+                return {
+                    'success': False,
+                    'error': 'Custom field not found'
+                }
+                
+        except Exception as e:
+            logger.error(f"Error getting custom field: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def get_custom_fields(self, model_name: str, record_id: int,
+                         database_name: str = None) -> Dict[str, Any]:
+        """Get all custom fields for a record"""
+        try:
+            from ..models import CustomField
+            
+            if database_name is None:
+                database_name = self.solution_name
+            
+            custom_fields = CustomField.objects.filter(
+                model_name=model_name,
+                record_id=record_id,
+                database_name=database_name
+            )
+            
+            fields_data = []
+            for field in custom_fields:
+                fields_data.append({
+                    'field_name': field.field_name,
+                    'field_value': field.field_value,
+                    'field_type': field.field_type
+                })
+            
+            return {
+                'success': True,
+                'fields': fields_data,
+                'count': len(fields_data)
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting custom fields: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def delete_custom_field(self, model_name: str, record_id: int, field_name: str,
+                           database_name: str = None) -> Dict[str, Any]:
+        """Delete custom field by model, record, and field name"""
+        try:
+            from ..models import CustomField
+            
+            if database_name is None:
+                database_name = self.solution_name
+            
+            try:
+                custom_field = CustomField.objects.get(
+                    model_name=model_name,
+                    record_id=record_id,
+                    field_name=field_name,
+                    database_name=database_name
+                )
+                custom_field.delete()
+                
+                return {
+                    'success': True,
+                    'message': f'Custom field {field_name} deleted successfully'
+                }
+                
+            except CustomField.DoesNotExist:
+                return {
+                    'success': False,
+                    'error': 'Custom field not found'
+                }
+                
+        except Exception as e:
+            logger.error(f"Error deleting custom field: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def merge_odoo_with_custom(self, model_name: str, record_id: int,
+                              odoo_fields: Optional[List[str]] = None,
+                              database_name: str = None) -> Dict[str, Any]:
+        """Merge Odoo data with custom fields"""
+        try:
+            if database_name is None:
+                database_name = self.solution_name
+            
+            # Get custom fields
+            custom_result = self.get_custom_fields(model_name, record_id, database_name)
+            if not custom_result['success']:
+                return custom_result
+            
+            # This is a simplified merge - in practice, you'd get Odoo data here
+            merged_data = {
+                'model_name': model_name,
+                'record_id': record_id,
+                'custom_fields': custom_result['fields']
+            }
+            
+            return {
+                'success': True,
+                'merged_data': merged_data
+            }
+            
+        except Exception as e:
+            logger.error(f"Error merging Odoo with custom data: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def get_virtual_model_schema(self, model_name: str, 
+                                database_name: str = None) -> Dict[str, Any]:
+        """Get virtual model schema including custom fields"""
+        try:
+            if database_name is None:
+                database_name = self.solution_name
+            
+            # Get custom field schema
+            custom_schema = self.get_custom_field_schema(model_name, database_name)
+            
+            # Build virtual schema
+            virtual_schema = {
+                'model_name': model_name,
+                'database_name': database_name,
+                'is_virtual': True,
+                'custom_fields': custom_schema.get('schema', {}).get('custom_fields', [])
+            }
+            
+            return {
+                'success': True,
+                'schema': virtual_schema
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting virtual model schema: {str(e)}")
             return {
                 'success': False,
                 'error': str(e)

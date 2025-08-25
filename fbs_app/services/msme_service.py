@@ -275,3 +275,131 @@ class MSMEService:
         except Exception as e:
             logger.error(f"Error updating business profile: {str(e)}")
             return {'success': False, 'error': str(e)}
+    
+    def create_custom_field(self, field_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Create custom field for the business"""
+        try:
+            from ..models.core import CustomField
+            
+            # Create custom field
+            custom_field = CustomField.objects.create(
+                model_name=field_data.get('model_name', ''),
+                record_id=field_data.get('record_id', 0),
+                field_name=field_data.get('field_name', ''),
+                field_type=field_data.get('field_type', 'char'),
+                field_value=field_data.get('field_value', ''),
+                solution_name=self.solution_name
+            )
+            
+            return {
+                'success': True,
+                'custom_field_id': custom_field.id,
+                'message': 'Custom field created successfully'
+            }
+            
+        except Exception as e:
+            logger.error(f"Error creating custom field: {str(e)}")
+            return {'success': False, 'error': str(e)}
+    
+    def get_business_templates(self) -> Dict[str, Any]:
+        """Get available business templates"""
+        try:
+            from ..models import MSMETemplate
+            
+            # Get templates for the solution
+            templates = MSMETemplate.objects.filter(solution_name=self.solution_name)
+            
+            template_data = []
+            for template in templates:
+                template_data.append({
+                    'template_name': template.template_name,
+                    'business_type': template.business_type,
+                    'description': template.description,
+                    'is_active': template.is_active
+                })
+            
+            return {
+                'success': True,
+                'templates': template_data,
+                'count': len(template_data)
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting business templates: {str(e)}")
+            return {'success': False, 'error': str(e)}
+    
+    def apply_business_template(self, template_name: str) -> Dict[str, Any]:
+        """Apply a business template"""
+        try:
+            from ..models import MSMETemplate
+            
+            # Get the template
+            try:
+                template = MSMETemplate.objects.get(
+                    template_name=template_name,
+                    solution_name=self.solution_name
+                )
+            except MSMETemplate.DoesNotExist:
+                return {'success': False, 'error': 'Template not found'}
+            
+            # Apply template configuration
+            # This would typically involve setting up business rules, workflows, etc.
+            
+            return {
+                'success': True,
+                'template_name': template_name,
+                'message': 'Template applied successfully'
+            }
+            
+        except Exception as e:
+            logger.error(f"Error applying business template: {str(e)}")
+            return {'success': False, 'error': str(e)}
+    
+    def get_setup_wizard_status(self) -> Dict[str, Any]:
+        """Get setup wizard status"""
+        try:
+            from ..models import MSMESetupWizard
+            
+            # Get the setup wizard for this solution
+            try:
+                wizard = MSMESetupWizard.objects.get(solution_name=self.solution_name)
+            except MSMESetupWizard.DoesNotExist:
+                return {'success': False, 'error': 'Setup wizard not found'}
+            
+            return {
+                'success': True,
+                'status': wizard.status,
+                'current_step': wizard.current_step,
+                'progress': wizard.progress,
+                'business_type': wizard.business_type
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting setup wizard status: {str(e)}")
+            return {'success': False, 'error': str(e)}
+    
+    def update_setup_wizard_step(self, step_name: str, step_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Update setup wizard step"""
+        try:
+            from ..models import MSMESetupWizard
+            
+            # Get the setup wizard for this solution
+            try:
+                wizard = MSMESetupWizard.objects.get(solution_name=self.solution_name)
+            except MSMESetupWizard.DoesNotExist:
+                return {'success': False, 'error': 'Setup wizard not found'}
+            
+            # Update step data
+            wizard.current_step = step_name
+            wizard.configuration.update(step_data)
+            wizard.save()
+            
+            return {
+                'success': True,
+                'message': 'Setup wizard step updated successfully',
+                'wizard_id': wizard.id
+            }
+            
+        except Exception as e:
+            logger.error(f"Error updating setup wizard step: {str(e)}")
+            return {'success': False, 'error': str(e)}

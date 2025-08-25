@@ -64,11 +64,11 @@ class MSMEInterface:
     
     def get_dashboard(self) -> Dict[str, Any]:
         """Get MSME dashboard data"""
-        return self._service.get_msme_dashboard()
+        return self._service.get_analytics_summary()
     
     def calculate_kpis(self) -> Dict[str, Any]:
         """Calculate MSME KPIs"""
-        return self._service.calculate_kpis()
+        return self._service.get_business_kpis()
     
     def get_compliance_status(self) -> Dict[str, Any]:
         """Get compliance status"""
@@ -352,7 +352,7 @@ class OdooIntegrationInterface:
         from .services.odoo_client import OdooClient
         from .services.discovery_service import DiscoveryService
         self._odoo_client = OdooClient(solution_name)
-        self._discovery_service = DiscoveryService(solution_name)
+        self._discovery_service = DiscoveryService()
     
     def discover_models(self, database_name: Optional[str] = None) -> Dict[str, Any]:
         """Discover Odoo models"""

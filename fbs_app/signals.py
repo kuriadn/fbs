@@ -19,8 +19,9 @@ from .models.core import (
 )
 from .models.msme import (
     MSMESetupWizard, MSMEKPI, MSMECompliance, MSMEMarketing,
-    MSMETemplate, MSMEAnalytics, CustomField
+    MSMETemplate, MSMEAnalytics
 )
+from .models.core import CustomField
 from .models.discovery import OdooModel, OdooField, OdooModule, DiscoverySession
 from .models.workflows import (
     WorkflowDefinition, WorkflowInstance, WorkflowStep, WorkflowTransition
@@ -58,7 +59,7 @@ def token_mapping_post_save(sender, instance, created, **kwargs):
 def request_log_post_save(sender, instance, created, **kwargs):
     """Handle post-save for RequestLog"""
     if created:
-        logger.debug(f"Request logged: {instance.method} {instance.endpoint}")
+        logger.debug(f"Request logged: {instance.method} {instance.path}")
 
 
 @receiver(post_save, sender=BusinessRule)
@@ -83,9 +84,9 @@ def cache_entry_post_save(sender, instance, created, **kwargs):
 def handshake_post_save(sender, instance, created, **kwargs):
     """Handle post-save for Handshake"""
     if created:
-        logger.info(f"New handshake created for system: {instance.system_name}")
+        logger.info(f"New handshake created for solution: {instance.solution_name}")
     else:
-        logger.info(f"Handshake updated for system: {instance.system_name}")
+        logger.info(f"Handshake updated for solution: {instance.solution_name}")
 
 
 @receiver(post_save, sender=Notification)
@@ -101,9 +102,9 @@ def notification_post_save(sender, instance, created, **kwargs):
 def approval_request_post_save(sender, instance, created, **kwargs):
     """Handle post-save for ApprovalRequest"""
     if created:
-        logger.info(f"New approval request created: {instance.request_type}")
+        logger.info(f"New approval request created: {instance.approval_type}")
     else:
-        logger.info(f"Approval request updated: {instance.request_type}")
+        logger.info(f"Approval request updated: {instance.approval_type}")
 
 
 @receiver(post_save, sender=MSMESetupWizard)
@@ -137,9 +138,9 @@ def workflow_definition_post_save(sender, instance, created, **kwargs):
 def workflow_instance_post_save(sender, instance, created, **kwargs):
     """Handle post-save for WorkflowInstance"""
     if created:
-        logger.info(f"New workflow instance created: {instance.workflow.name}")
+        logger.info(f"New workflow instance created: {instance.workflow_definition.name}")
     else:
-        logger.debug(f"Workflow instance updated: {instance.workflow.name}")
+        logger.debug(f"Workflow instance updated: {instance.workflow_definition.name}")
 
 
 @receiver(post_save, sender=Dashboard)
