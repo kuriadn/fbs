@@ -363,6 +363,7 @@ class DocumentService:
         """Get FBS interface for Odoo integration"""
         try:
             from fbs_app.interfaces import FBSInterface
+            # Use company_id as solution_name for FBS integration
             return FBSInterface(self.company_id)
         except ImportError:
             logger.warning("FBS app interfaces not available")

@@ -746,3 +746,502 @@ class LicenseManager:
                 solution_dbs.append(db_name)
         return solution_dbs
 
+
+class OdooLicenseService:
+    """Odoo-driven license service using FBS virtual fields for extensions"""
+    
+    def __init__(self, company_id: str, fbs_interface=None):
+        self.company_id = company_id
+        self.fbs = fbs_interface
+        self.odoo_licenses = fbs_interface.odoo if fbs_interface else None
+        self.virtual_fields = fbs_interface.fields if fbs_interface else None
+        
+        if not self.odoo_licenses:
+            logger.warning("Odoo integration not available - License Manager will work in limited mode")
+    
+    def create_license(self, license_data: Dict[str, Any], user=None) -> Dict[str, Any]:
+        """Create license with Odoo storage + FBS virtual fields"""
+        if not self.odoo_licenses:
+            return {
+                'success': False,
+                'error': 'Odoo integration required for license creation'
+            }
+        
+        try:
+            # 1. Prepare base company data for Odoo (res.partner)
+            odoo_data = {
+                'name': license_data['company_name'],
+                'email': license_data.get('email', ''),
+                'phone': license_data.get('phone', ''),
+                'street': license_data.get('address', {}).get('street', ''),
+                'city': license_data.get('address', {}).get('city', ''),
+                'state_id': license_data.get('address', {}).get('state_id', False),
+                'country_id': license_data.get('address', {}).get('country_id', False),
+                'zip': license_data.get('address', {}).get('zip', ''),
+                'is_company': True,
+                'customer_rank': 1,
+                'company_id': self.company_id,
+                'create_uid': user.id if user else 1,
+                'write_uid': user.id if user else 1,
+                'create_date': timezone.now().isoformat(),
+                'write_date': timezone.now().isoformat()
+            }
+            
+            # 2. Create company in Odoo
+            odoo_result = self.odoo_licenses.create_record('res.partner', odoo_data)
+            
+            if not odoo_result.get('success'):
+                raise Exception(f"Odoo company creation failed: {odoo_result.get('error')}")
+            
+            odoo_id = odoo_result['data']['id']
+            
+            # 3. Add FBS virtual fields for license-specific data
+            if self.virtual_fields:
+                self._add_license_virtual_fields(odoo_id, license_data)
+            
+            return {
+                'success': True,
+                'odoo_id': odoo_id,
+                'message': 'License created successfully in Odoo with virtual fields'
+            }
+            
+        except Exception as e:
+            logger.error(f"License creation failed: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def _add_license_virtual_fields(self, odoo_id: int, license_data: Dict[str, Any]):
+        """Add license-specific virtual fields to the Odoo company"""
+        try:
+            # License key (encrypted)
+            if license_data.get('license_key'):
+                self.virtual_fields.set_custom_field(
+                    'res.partner', odoo_id, 'license_key', 
+                    license_data['license_key'], 'char', self.company_id
+                )
+            
+            # License type
+            self.virtual_fields.set_custom_field(
+                'res.partner', odoo_id, 'license_type', 
+                license_data.get('license_type', 'standard'), 'char', self.company_id
+            )
+            
+            # License status
+            self.virtual_fields.set_custom_field(
+                'res.partner', odoo_id, 'license_status', 
+                license_data.get('status', 'active'), 'char', self.company_id
+            )
+            
+            # Expiry date
+            if license_data.get('expiry_date'):
+                expiry_date = license_data['expiry_date']
+                if hasattr(expiry_date, 'isoformat'):
+                    expiry_date = expiry_date.isoformat()
+                self.virtual_fields.set_custom_field(
+                    'res.partner', odoo_id, 'expiry_date', 
+                    expiry_date, 'date', self.company_id
+                )
+            
+            # Feature flags (JSON encoded)
+            if license_data.get('features'):
+                self.virtual_fields.set_custom_field(
+                    'res.partner', odoo_id, 'feature_flags', 
+                    json.dumps(license_data['features']), 'text', self.company_id
+                )
+            
+            # Usage limits
+            if license_data.get('max_users'):
+                self.virtual_fields.set_custom_field(
+                    'res.partner', odoo_id, 'max_users', 
+                    license_data['max_users'], 'integer', self.company_id
+                )
+            
+            if license_data.get('max_storage_gb'):
+                self.virtual_fields.set_custom_field(
+                    'res.partner', odoo_id, 'max_storage_gb', 
+                    license_data['max_storage_gb'], 'integer', self.company_id
+                )
+            
+            # Additional fields from test data
+            if license_data.get('api_rate_limit'):
+                self.virtual_fields.set_custom_field(
+                    'res.partner', odoo_id, 'api_rate_limit', 
+                    license_data['api_rate_limit'], 'integer', self.company_id
+                )
+            
+            if license_data.get('billing_cycle'):
+                self.virtual_fields.set_custom_field(
+                    'res.partner', odoo_id, 'billing_cycle', 
+                    license_data['billing_cycle'], 'char', self.company_id
+                )
+            
+            if license_data.get('billing_amount'):
+                self.virtual_fields.set_custom_field(
+                    'res.partner', odoo_id, 'billing_amount', 
+                    license_data['billing_amount'], 'float', self.company_id
+                )
+            
+            if license_data.get('contact_person'):
+                self.virtual_fields.set_custom_field(
+                    'res.partner', odoo_id, 'contact_person', 
+                    license_data['contact_person'], 'char', self.company_id
+                )
+            
+            logger.info(f"Added license virtual fields to Odoo company {odoo_id}")
+            
+        except Exception as e:
+            logger.error(f"Failed to add license virtual fields: {str(e)}")
+            # Don't fail the main operation if virtual fields fail
+    
+    def get_license(self, odoo_id: int) -> Dict[str, Any]:
+        """Get complete license data from Odoo + FBS virtual fields"""
+        if not self.odoo_licenses:
+            return {
+                'success': False,
+                'error': 'Odoo integration required'
+            }
+        
+        try:
+            # 1. Get base Odoo company data
+            odoo_result = self.odoo_licenses.get_record('res.partner', odoo_id)
+            
+            if not odoo_result.get('success'):
+                return {
+                    'success': False,
+                    'error': f"License not found: {odoo_result.get('error')}"
+                }
+            
+            # 2. Get FBS virtual fields
+            virtual_fields_data = {}
+            if self.virtual_fields:
+                virtual_result = self.virtual_fields.get_custom_fields(
+                    'res.partner', odoo_id, self.company_id
+                )
+                
+                if virtual_result.get('success'):
+                    virtual_fields_data = virtual_result.get('data', {})
+            
+            # 3. Merge Odoo data with virtual fields
+            complete_data = odoo_result['data']
+            complete_data.update(virtual_fields_data)
+            
+            # 4. Parse JSON fields
+            if 'feature_flags' in complete_data:
+                try:
+                    complete_data['features'] = json.loads(complete_data['feature_flags'])
+                except (json.JSONDecodeError, TypeError):
+                    complete_data['features'] = {}
+            
+            return {
+                'success': True,
+                'data': complete_data,
+                'message': 'License retrieved successfully'
+            }
+            
+        except Exception as e:
+            logger.error(f"License retrieval failed: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def check_feature_access(self, odoo_id: int, feature_name: str) -> Dict[str, Any]:
+        """Check if a license has access to a specific feature"""
+        try:
+            license_data = self.get_license(odoo_id)
+            
+            if not license_data.get('success'):
+                return {
+                    'success': False,
+                    'error': 'License not found'
+                }
+            
+            data = license_data['data']
+            features = data.get('features', {})
+            
+            # Check if feature is enabled
+            feature_enabled = features.get(feature_name, False)
+            
+            if not feature_enabled:
+                return {
+                    'success': True,
+                    'access': False,
+                    'message': f'Feature {feature_name} not enabled for this license'
+                }
+            
+            # Check usage limits
+            current_usage = data.get(f'current_{feature_name}', 0)
+            max_limit = data.get(f'max_{feature_name}', -1)
+            
+            if max_limit > 0 and current_usage >= max_limit:
+                return {
+                    'success': True,
+                    'access': False,
+                    'message': f'Feature {feature_name} usage limit reached',
+                    'current': current_usage,
+                    'limit': max_limit
+                }
+            
+            return {
+                'success': True,
+                'access': True,
+                'message': f'Feature {feature_name} access granted',
+                'current': current_usage,
+                'limit': max_limit
+            }
+            
+        except Exception as e:
+            logger.error(f"Feature access check failed: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def update_license(self, odoo_id: int, update_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Update license data in Odoo + FBS virtual fields"""
+        if not self.odoo_licenses:
+            return {
+                'success': False,
+                'error': 'Odoo integration required for license updates'
+            }
+        
+        try:
+            # 1. Update base Odoo company data
+            odoo_update = {}
+            if 'name' in update_data:
+                odoo_update['name'] = update_data['name']
+            if 'company_name' in update_data:
+                odoo_update['name'] = update_data['company_name']
+            if 'email' in update_data:
+                odoo_update['email'] = update_data['email']
+            if 'phone' in update_data:
+                odoo_update['phone'] = update_data['phone']
+            if 'address' in update_data:
+                address = update_data['address']
+                if 'street' in address:
+                    odoo_update['street'] = address['street']
+                if 'city' in address:
+                    odoo_update['city'] = address['city']
+                if 'state_id' in address:
+                    odoo_update['state_id'] = address['state_id']
+                if 'country_id' in address:
+                    odoo_update['country_id'] = address['country_id']
+                if 'zip' in address:
+                    odoo_update['zip'] = address['zip']
+            
+            if odoo_update:
+                odoo_result = self.odoo_licenses.update_record('res.partner', odoo_id, odoo_update)
+                if not odoo_result.get('success'):
+                    raise Exception(f"Odoo company update failed: {odoo_result.get('error')}")
+            
+            # 2. Update FBS virtual fields
+            if self.virtual_fields:
+                self._update_license_virtual_fields(odoo_id, update_data)
+            
+            return {
+                'success': True,
+                'message': 'License updated successfully in Odoo with virtual fields'
+            }
+            
+        except Exception as e:
+            logger.error(f"License update failed: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def _update_license_virtual_fields(self, odoo_id: int, update_data: Dict[str, Any]):
+        """Update license-specific virtual fields in the Odoo company"""
+        try:
+            # License key (encrypted)
+            if 'license_key' in update_data:
+                self.virtual_fields.set_custom_field(
+                    'res.partner', odoo_id, 'license_key', 
+                    update_data['license_key'], 'char', self.company_id
+                )
+            
+            # License type
+            if 'license_type' in update_data:
+                self.virtual_fields.set_custom_field(
+                    'res.partner', odoo_id, 'license_type', 
+                    update_data['license_type'], 'char', self.company_id
+                )
+            
+            # License status
+            if 'status' in update_data:
+                self.virtual_fields.set_custom_field(
+                    'res.partner', odoo_id, 'license_status', 
+                    update_data['status'], 'char', self.company_id
+                )
+            
+            # Expiry date
+            if 'expiry_date' in update_data:
+                expiry_date = update_data['expiry_date']
+                if hasattr(expiry_date, 'isoformat'):
+                    expiry_date = expiry_date.isoformat()
+                self.virtual_fields.set_custom_field(
+                    'res.partner', odoo_id, 'expiry_date', 
+                    expiry_date, 'date', self.company_id
+                )
+            
+            # Feature flags (JSON encoded)
+            if 'features' in update_data:
+                self.virtual_fields.set_custom_field(
+                    'res.partner', odoo_id, 'feature_flags', 
+                    json.dumps(update_data['features']), 'text', self.company_id
+                )
+            
+            # Usage limits
+            if 'max_users' in update_data:
+                self.virtual_fields.set_custom_field(
+                    'res.partner', odoo_id, 'max_users', 
+                    update_data['max_users'], 'integer', self.company_id
+                )
+            
+            if 'max_storage_gb' in update_data:
+                self.virtual_fields.set_custom_field(
+                    'res.partner', odoo_id, 'max_storage_gb', 
+                    update_data['max_storage_gb'], 'integer', self.company_id
+                )
+            
+            logger.info(f"Updated license virtual fields for Odoo company {odoo_id}")
+            
+        except Exception as e:
+            logger.error(f"Failed to update license virtual fields: {str(e)}")
+            # Don't fail the main operation if virtual fields fail
+    
+    def delete_license(self, odoo_id: int) -> Dict[str, Any]:
+        """Delete license from Odoo"""
+        if not self.odoo_licenses:
+            return {
+                'success': False,
+                'error': 'Odoo integration required for license deletion'
+            }
+        
+        try:
+            # Delete from Odoo
+            odoo_result = self.odoo_licenses.delete_record('res.partner', odoo_id)
+            
+            if not odoo_result.get('success'):
+                return {
+                    'success': False,
+                    'error': f"Odoo deletion failed: {odoo_result.get('error')}"
+                }
+            
+            return {
+                'success': True,
+                'message': 'License deleted successfully from Odoo'
+            }
+            
+        except Exception as e:
+            logger.error(f"License deletion failed: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def search_licenses(self, filters: Dict[str, Any]) -> Dict[str, Any]:
+        """Search licenses using Odoo domain + FBS virtual fields"""
+        if not self.odoo_licenses:
+            return {
+                'success': False,
+                'error': 'Odoo integration required for license search'
+            }
+        
+        try:
+            # Build search domain
+            domain = self._build_search_domain(filters)
+            
+            # Search in Odoo
+            odoo_result = self.odoo_licenses.get_records('res.partner', domain)
+            
+            if not odoo_result.get('success'):
+                return {
+                    'success': False,
+                    'error': f"Odoo search failed: {odoo_result.get('error')}"
+                }
+            
+            # Enhance results with virtual fields
+            enhanced_results = []
+            for record in odoo_result.get('data', []):
+                enhanced_record = record.copy()
+                
+                if self.virtual_fields:
+                    virtual_result = self.virtual_fields.get_custom_fields(
+                        'res.partner', record['id'], self.company_id
+                    )
+                    
+                    if virtual_result.get('success'):
+                        enhanced_record.update(virtual_result.get('data', {}))
+                
+                enhanced_results.append(enhanced_record)
+            
+            return {
+                'success': True,
+                'data': enhanced_results,
+                'count': len(enhanced_results),
+                'message': f'Found {len(enhanced_results)} licenses'
+            }
+            
+        except Exception as e:
+            logger.error(f"License search failed: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def _build_search_domain(self, filters: Dict[str, Any]) -> List:
+        """Build Odoo search domain from filters"""
+        domain = [('is_company', '=', True)]
+        
+        if filters.get('company_name'):
+            domain.append(('name', 'ilike', filters['company_name']))
+        
+        if filters.get('email'):
+            domain.append(('email', 'ilike', filters['email']))
+        
+        if filters.get('city'):
+            domain.append(('city', 'ilike', filters['city']))
+        
+        if filters.get('country_id'):
+            domain.append(('country_id', '=', filters['country_id']))
+        
+        if filters.get('license_type') and self.virtual_fields:
+            # For virtual fields, we'll need to search differently
+            # This is a simplified approach
+            pass
+        
+        return domain
+    
+    def update_feature_usage(self, odoo_id: int, feature_name: str, usage_count: int) -> Dict[str, Any]:
+        """Update feature usage count for a license"""
+        if not self.virtual_fields:
+            return {
+                'success': False,
+                'error': 'Virtual fields not available for usage tracking'
+            }
+        
+        try:
+            # Update current usage count
+            self.virtual_fields.set_custom_field(
+                'res.partner', odoo_id, f'current_{feature_name}', 
+                usage_count, 'integer', self.company_id
+            )
+            
+            logger.info(f"Updated {feature_name} usage to {usage_count} for license {odoo_id}")
+            
+            return {
+                'success': True,
+                'message': f'Updated {feature_name} usage to {usage_count}',
+                'current_usage': usage_count
+            }
+            
+        except Exception as e:
+            logger.error(f"Feature usage update failed: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+

@@ -258,8 +258,8 @@ class SolutionLicense(models.Model):
                 return False
             # Try to decode as base64
             decoded = base64.urlsafe_b64decode(text + '==')
-            # Check if it's Fernet format (32 bytes)
-            return len(decoded) == 32
+            # Check if it's Fernet format (should be at least 44 bytes: 32 key + 12 nonce + encrypted data)
+            return len(decoded) >= 44
         except Exception:
             return False
     

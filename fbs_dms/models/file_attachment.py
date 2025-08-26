@@ -21,6 +21,7 @@ class FileAttachment(models.Model):
         help_text='Uploaded file'
     )
     original_filename = models.CharField(max_length=255)
+    description = models.TextField(blank=True, help_text='Description of the file attachment')
     file_size = models.BigIntegerField(
         validators=[MinValueValidator(1)],
         help_text='File size in bytes'

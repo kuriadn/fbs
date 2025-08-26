@@ -369,23 +369,25 @@ class OdooIntegrationInterface:
     def get_records(self, model_name: str, filters: Optional[Dict[str, Any]] = None, 
                    fields: Optional[List[str]] = None, limit: Optional[int] = None) -> Dict[str, Any]:
         """Get records from Odoo"""
-        return self._odoo_client.list_records(model_name, filters, fields, limit)
+        # Map filters to domain format expected by OdooClient
+        domain = filters if filters else []
+        return self._odoo_client.list_records(model_name, '', self.solution_name, domain, fields, None, limit, 0)
     
     def get_record(self, model_name: str, record_id: int, fields: Optional[List[str]] = None) -> Dict[str, Any]:
         """Get single record from Odoo"""
-        return self._odoo_client.get_record(model_name, record_id, fields)
+        return self._odoo_client.get_record(model_name, record_id, '', self.solution_name, fields)
     
     def create_record(self, model_name: str, record_data: Dict[str, Any]) -> Dict[str, Any]:
         """Create record in Odoo"""
-        return self._odoo_client.create_record(model_name, record_data)
+        return self._odoo_client.create_record(model_name, record_data, '', self.solution_name)
     
     def update_record(self, model_name: str, record_id: int, record_data: Dict[str, Any]) -> Dict[str, Any]:
         """Update record in Odoo"""
-        return self._odoo_client.update_record(model_name, record_id, record_data)
+        return self._odoo_client.update_record(model_name, record_id, record_data, '', self.solution_name)
     
     def delete_record(self, model_name: str, record_id: int) -> Dict[str, Any]:
         """Delete record from Odoo"""
-        return self._odoo_client.delete_record(model_name, record_id)
+        return self._odoo_client.delete_record(model_name, record_id, '', self.solution_name)
     
     def execute_method(self, model_name: str, method_name: str, record_ids: List[int], 
                       parameters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:

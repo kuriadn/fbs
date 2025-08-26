@@ -16,6 +16,7 @@ class DocumentType(models.Model):
     
     name = models.CharField(max_length=100, unique=True)
     code = models.CharField(max_length=50, unique=True)
+    description = models.TextField(blank=True, help_text='Description of this document type')
     requires_approval = models.BooleanField(default=False)
     allowed_extensions = models.CharField(
         max_length=500, 
@@ -57,6 +58,7 @@ class DocumentCategory(models.Model):
     """Document category hierarchy"""
     
     name = models.CharField(max_length=100)
+    description = models.TextField(blank=True, help_text='Description of this category')
     parent = models.ForeignKey(
         'self', 
         on_delete=models.CASCADE, 
@@ -87,6 +89,7 @@ class DocumentTag(models.Model):
     """Document tags for organization"""
     
     name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True, help_text='Description of this tag')
     color = models.IntegerField(
         default=1,
         validators=[MinValueValidator(1), MaxValueValidator(12)],

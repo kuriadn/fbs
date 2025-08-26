@@ -268,6 +268,10 @@ if 'test' in sys.argv or 'pytest' in sys.argv:
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': ':memory:',
+        },
+        'licensing': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',
         }
     }
     

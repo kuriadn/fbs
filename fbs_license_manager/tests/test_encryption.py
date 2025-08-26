@@ -11,6 +11,8 @@ from ..models import SolutionLicense
 class LicenseEncryptionTest(TestCase):
     """Test license key encryption and decryption"""
     
+    databases = {'default', 'licensing'}
+    
     def setUp(self):
         """Set up test data"""
         self.test_license_key = "TEST-LICENSE-KEY-12345"

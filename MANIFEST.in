@@ -1,0 +1,77 @@
+# Include README and documentation
+include README.md
+include LICENSE
+include CHANGELOG.md
+include docs/README.md
+
+# Include requirements files
+include requirements.txt
+include requirements-dev.txt
+
+# Include configuration files
+include pyproject.toml
+include setup.py
+include pytest.ini
+include conftest.py
+
+# Include environment template
+include env.example
+
+# Include Makefile
+include Makefile
+
+# Include all Python files
+recursive-include fbs_app *.py
+recursive-include fbs_dms *.py
+recursive-include fbs_license_manager *.py
+
+# Include migrations
+recursive-include fbs_app/migrations *.py
+recursive-include fbs_dms/migrations *.py
+recursive-include fbs_license_manager/migrations *.py
+
+# Include templates
+recursive-include fbs_app/templates *.html
+recursive-include fbs_dms/templates *.html
+recursive-include fbs_license_manager/templates *.html
+
+# Include static files
+recursive-include fbs_app/static *.css *.js *.png *.jpg *.gif *.svg
+recursive-include fbs_dms/static *.css *.js *.png *.jpg *.gif *.svg
+recursive-include fbs_license_manager/static *.css *.js *.png *.jpg *.gif *.svg
+
+# Include locale files
+recursive-include fbs_app/locale *.po *.mo
+recursive-include fbs_dms/locale *.po *.mo
+recursive-include fbs_license_manager/locale *.po *.mo
+
+# Include test files
+recursive-include tests *.py
+recursive-include fbs_app/tests *.py
+recursive-include fbs_dms/tests *.py
+recursive-include fbs_license_manager/tests *.py
+
+# Include management commands
+recursive-include fbs_app/management *.py
+recursive-include fbs_dms/management *.py
+recursive-include fbs_license_manager/management *.py
+
+# Exclude unnecessary files
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.pyd
+global-exclude __pycache__
+global-exclude *.so
+global-exclude .DS_Store
+global-exclude .git*
+global-exclude .coverage
+global-exclude htmlcov/
+global-exclude .pytest_cache/
+global-exclude .benchmarks/
+global-exclude *.egg-info/
+global-exclude build/
+global-exclude dist/
+global-exclude .venv/
+global-exclude venv/
+global-exclude .env
+global-exclude *.log

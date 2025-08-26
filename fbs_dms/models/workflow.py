@@ -24,6 +24,7 @@ class DocumentWorkflow(models.Model):
         on_delete=models.CASCADE,
         related_name='workflow'
     )
+    description = models.TextField(blank=True, help_text='Description of the workflow')
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
@@ -94,6 +95,7 @@ class DocumentApproval(models.Model):
         on_delete=models.CASCADE,
         related_name='approval_steps'
     )
+    description = models.TextField(blank=True, help_text='Description of this approval step')
     approver = models.ForeignKey(
         User,
         on_delete=models.CASCADE,

@@ -26,7 +26,7 @@ def read_requirements():
 
 setup(
     name='fbs-dms',
-    version='1.0.0',
+    version='2.0.0',
     description='Embeddable Django application for document management',
     long_description=read_readme(),
     long_description_content_type='text/markdown',
