@@ -352,7 +352,7 @@ class OdooIntegrationInterface:
         from .services.odoo_client import OdooClient
         from .services.discovery_service import DiscoveryService
         self._odoo_client = OdooClient(solution_name)
-        self._discovery_service = DiscoveryService()
+        self._discovery_service = DiscoveryService(solution_name)
     
     def discover_models(self, database_name: Optional[str] = None) -> Dict[str, Any]:
         """Discover Odoo models"""
@@ -397,6 +397,12 @@ class OdooIntegrationInterface:
     def get_database_info(self) -> Dict[str, Any]:
         """Get Odoo database information"""
         return self._odoo_client.get_database_info()
+    
+    def create_fbs_tables(self, database_name: Optional[str] = None) -> Dict[str, Any]:
+        """Create required FBS database tables"""
+        from .services.database_service import DatabaseService
+        db_service = DatabaseService(self.solution_name)
+        return db_service.create_fbs_tables(database_name)
 
 
 class VirtualFieldsInterface:

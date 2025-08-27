@@ -16,10 +16,11 @@ logger = logging.getLogger('fbs_app')
 class DiscoveryService:
     """Service for discovering and managing Odoo models and modules"""
     
-    def __init__(self, database_name: str = None):
+    def __init__(self, solution_name: str = None, database_name: str = None):
         self.fbs_config = getattr(settings, 'FBS_APP', {})
+        self.solution_name = solution_name
         self.database_name = database_name
-        self.odoo_client = OdooClient()
+        self.odoo_client = OdooClient(solution_name)
     
     def discover_models(self, database_name: str = None) -> Dict[str, Any]:
         """Discover all models in an Odoo database"""
@@ -159,6 +160,46 @@ class DiscoveryService:
                 'success': False,
                 'error': str(e),
                 'message': 'Failed to discover modules'
+            }
+    
+    def discover_fields(self, model_name: str, database_name: str = None) -> Dict[str, Any]:
+        """Discover fields for a specific Odoo model"""
+        try:
+            db_name = database_name or self.database_name
+            if not db_name:
+                return {
+                    'success': False,
+                    'error': 'Database name not specified',
+                    'message': 'Please provide a database name'
+                }
+            
+            # Get field definitions
+            result = self.odoo_client.get_model_fields(model_name, db_name)
+            
+            if not result['success']:
+                return result
+            
+            fields = result['data']
+            
+            # Process field information
+            processed_fields = self._process_field_info(fields)
+            
+            return {
+                'success': True,
+                'data': {
+                    'model_name': model_name,
+                    'fields': processed_fields,
+                    'field_count': len(processed_fields)
+                },
+                'message': f'Discovered {len(processed_fields)} fields for {model_name}'
+            }
+            
+        except Exception as e:
+            logger.error(f"Error discovering model fields: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e),
+                'message': 'Failed to discover model fields'
             }
     
     def install_module(self, module_name: str, database_name: str = None) -> Dict[str, Any]:

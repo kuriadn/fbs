@@ -26,12 +26,46 @@ class OdooClientError(Exception):
 class OdooClient:
     """XML-RPC client for communicating with Odoo"""
     
-    def __init__(self, base_url: str = None, timeout: int = None):
+    def __init__(self, solution_name: str = None, base_url: str = None, timeout: int = None):
         # Get configuration from FBS settings or Django settings
         fbs_config = getattr(settings, 'FBS_APP', {})
+        self.solution_name = solution_name
         self.base_url = base_url or fbs_config.get('ODOO_BASE_URL', 'http://localhost:8069')
         self.timeout = timeout or fbs_config.get('ODOO_TIMEOUT', 30)
         self.max_retries = fbs_config.get('ODOO_MAX_RETRIES', 3)
+    
+    def get_database_info(self) -> Dict[str, Any]:
+        """Get Odoo database connection information"""
+        try:
+            fbs_config = getattr(settings, 'FBS_APP', {})
+            return {
+                'success': True,
+                'data': {
+                    'base_url': self.base_url,
+                    'timeout': self.timeout,
+                    'max_retries': self.max_retries,
+                    'solution_name': self.solution_name,
+                    'configured': bool(fbs_config.get('ODOO_BASE_URL')),
+                    'credentials_configured': bool(fbs_config.get('DATABASE_USER') and fbs_config.get('DATABASE_PASSWORD'))
+                }
+            }
+        except Exception as e:
+            logger.error(f"Error getting database info: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e),
+                'message': 'Failed to get database information'
+            }
+    
+    def is_available(self) -> bool:
+        """Check if Odoo connection is available"""
+        try:
+            # Try to connect to common endpoint
+            common = xmlrpc.client.ServerProxy(f'{self.base_url}/xmlrpc/2/common')
+            version_info = common.version()
+            return bool(version_info)
+        except Exception:
+            return False
     
     def _get_odoo_credentials(self, database: str) -> Dict[str, str]:
         """Get Odoo credentials for the specified database"""

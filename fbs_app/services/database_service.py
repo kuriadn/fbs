@@ -555,3 +555,115 @@ class DatabaseService:
                 'success': False,
                 'error': str(e)
             }
+
+    def create_fbs_tables(self, solution_name: str = None) -> Dict[str, Any]:
+        """
+        Create required FBS database tables for the solution
+        
+        Args:
+            solution_name: Name of the solution (optional, uses self.solution_name if not provided)
+            
+        Returns:
+            Dict: Result of table creation operation
+        """
+        try:
+            sol_name = solution_name or self.solution_name
+            if not sol_name:
+                return {
+                    'success': False,
+                    'error': 'Solution name not specified',
+                    'message': 'Please provide a solution name'
+                }
+            
+            # Get database configuration
+            db_config = self.get_database_config('fbs', sol_name)
+            database_name = db_config['database_name']
+            
+            # Connect to the FBS database
+            conn = psycopg2.connect(
+                host=db_config['host'],
+                port=db_config['port'],
+                user=db_config['user'],
+                password=db_config['password'],
+                database=database_name
+            )
+            
+            cursor = conn.cursor()
+            
+            # Create fbs_msme_analytics table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS fbs_msme_analytics (
+                    id SERIAL PRIMARY KEY,
+                    solution_name VARCHAR(100) NOT NULL,
+                    business_id INTEGER NOT NULL,
+                    metric_name VARCHAR(200) NOT NULL,
+                    metric_value DECIMAL(15,2),
+                    metric_date DATE NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            # Create fbs_reports table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS fbs_reports (
+                    id SERIAL PRIMARY KEY,
+                    solution_name VARCHAR(100) NOT NULL,
+                    report_name VARCHAR(200) NOT NULL,
+                    report_type VARCHAR(100) NOT NULL,
+                    report_data JSONB,
+                    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    created_by VARCHAR(100),
+                    status VARCHAR(50) DEFAULT 'active'
+                )
+            """)
+            
+            # Create fbs_compliance_rules table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS fbs_compliance_rules (
+                    id SERIAL PRIMARY KEY,
+                    solution_name VARCHAR(100) NOT NULL,
+                    rule_name VARCHAR(200) NOT NULL,
+                    rule_type VARCHAR(100) NOT NULL,
+                    rule_definition JSONB,
+                    is_active BOOLEAN DEFAULT TRUE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            # Create indexes for better performance
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_fbs_msme_analytics_solution_business 
+                ON fbs_msme_analytics(solution_name, business_id)
+            """)
+            
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_fbs_reports_solution_type 
+                ON fbs_reports(solution_name, report_type)
+            """)
+            
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_fbs_compliance_rules_solution_type 
+                ON fbs_compliance_rules(solution_name, rule_type)
+            """)
+            
+            # Commit the changes
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            return {
+                'success': True,
+                'database_name': database_name,
+                'tables_created': ['fbs_msme_analytics', 'fbs_reports', 'fbs_compliance_rules'],
+                'message': f'FBS tables created successfully in {database_name}'
+            }
+            
+        except Exception as e:
+            logger.error(f"Error creating FBS tables: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e),
+                'message': 'Failed to create FBS tables'
+            }
