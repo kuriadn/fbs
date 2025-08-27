@@ -1,10 +1,35 @@
 # FBS Versioning Guide
 
-## 🏷️ Current Version: 2.0.0
+## 🏷️ Current Version: 2.0.1
 
-**Release Date**: January 27, 2025  
-**Release Type**: Major Release  
-**Compatibility**: Breaking Changes from v1.x
+**Release Date**: August 27, 2024  
+**Release Type**: Patch Release  
+**Compatibility**: Compatible with v2.0.0
+
+## 📋 Version 2.0.1 Summary
+
+### **🐛 Critical Bug Fixes**
+
+Version 2.0.1 addresses **all critical Odoo integration issues** that were blocking full functionality in v2.0.0.
+
+#### **Odoo Integration Fixes**
+- **Fixed constructor mismatches**: All FBS services now properly accept `solution_name` parameter
+- **Added missing methods**: `get_database_info()`, `discover_fields()` methods implemented
+- **Standardized response formats**: All methods return consistent response structures
+- **Fixed method return values**: Methods no longer return `False`, now return proper error structures
+- **Added database table creation**: `create_fbs_tables()` method for required FBS tables
+
+#### **Service Layer Improvements**
+- **OdooClient**: Added `get_database_info()` and `is_available()` methods
+- **DiscoveryService**: Added `discover_fields()` method, fixed constructor
+- **DatabaseService**: Added `create_fbs_tables()` method for FBS infrastructure
+- **Interface consistency**: All interfaces now properly pass `solution_name` to services
+
+#### **Architecture Improvements**
+- **Constructor consistency**: All services follow same parameter pattern
+- **Error handling**: Robust error handling with proper response structures
+- **Method signatures**: Standardized across all services and interfaces
+- **Database integration**: Proper FBS table creation and management
 
 ## 📋 Version 2.0.0 Summary
 
@@ -71,8 +96,13 @@ FBS follows [Semantic Versioning 2.0.0](https://semver.org/) with the format: `M
 
 ## 📊 Version History
 
-### **Version 2.0.0** (Current)
-- **Release Date**: January 27, 2025
+### **Version 2.0.1** (Current)
+- **Release Date**: August 27, 2024
+- **Type**: Patch Release
+- **Key Changes**: Critical Odoo integration bug fixes, service layer improvements
+
+### **Version 2.0.0**
+- **Release Date**: August 27, 2024
 - **Type**: Major Release
 - **Key Changes**: Odoo-driven architecture, Virtual Fields, three-app ecosystem
 

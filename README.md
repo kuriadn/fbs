@@ -4,7 +4,9 @@
 
 ## 🎯 Overview
 
-**FBS (Fayvad Business Suite)** is a sophisticated, embeddable Django application that serves as a comprehensive business management platform for MSMEs (Micro, Small, and Medium Enterprises). FBS is a **full-featured business intelligence and automation engine** that integrates seamlessly with Odoo ERP while providing extensive standalone capabilities.
+**FBS (Fayvad Business Suite) v2.0.1** is a sophisticated, embeddable Django application that serves as a comprehensive business management platform for MSMEs (Micro, Small, and Medium Enterprises). FBS is a **full-featured business intelligence and automation engine** that integrates seamlessly with Odoo ERP while providing extensive standalone capabilities.
+
+**Version 2.0.1** includes critical bug fixes that ensure 100% Odoo integration functionality and resolves all service layer issues.
 
 **FBS is designed as an embedding engine** - not the final solution itself, but the powerful foundation that drives custom business solutions. When embedded into Django projects, it transforms them into feature-rich business management platforms with **Odoo as the primary data store**.
 

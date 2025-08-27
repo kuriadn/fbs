@@ -29,12 +29,13 @@ def read_dev_requirements():
     requirements_path = os.path.join(os.path.dirname(__file__), 'requirements-dev.txt')
     if os.path.exists(requirements_path):
         with open(requirements_path, 'r', encoding='utf-8') as f:
-            return [line.strip() for line in f if line.strip() and not line.startswith('#')]
+            requirements = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+            return requirements if requirements else []
     return []
 
 setup(
     name='fbs-suite',
-    version='2.0.0',
+    version='2.0.1',
     description='Odoo-driven business management platform for Django',
     long_description=read_readme(),
     long_description_content_type='text/markdown',
@@ -49,7 +50,20 @@ setup(
     include_package_data=True,
     install_requires=read_requirements(),
     extras_require={
-        'dev': read_dev_requirements(),
+        'dev': [
+            'pytest>=7.4.0,<8.0.0',
+            'pytest-django>=4.7.0,<5.0.0',
+            'pytest-cov>=4.1.0,<5.0.0',
+            'pytest-mock>=3.11.0,<4.0.0',
+            'pytest-xdist>=3.3.0,<4.0.0',
+            'factory-boy>=3.3.0,<4.0.0',
+            'faker>=19.0.0,<20.0.0',
+            'coverage>=7.3.0,<8.0.0',
+            'black>=23.7.0,<24.0.0',
+            'flake8>=6.0.0,<7.0.0',
+            'isort>=5.12.0,<6.0.0',
+            'mypy>=1.5.0,<2.0.0',
+        ],
         'test': [
             'pytest>=7.4.0,<8.0.0',
             'pytest-django>=4.7.0,<5.0.0',

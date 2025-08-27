@@ -18,7 +18,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restructured requirements for production vs. development use
 - Enhanced setup.py with proper app inclusion
 
-## [2.0.0] - 2025-01-27
+## [2.0.1] - 2024-08-27
+
+### Fixed
+- **Critical Odoo Integration Issues**: Fixed all blocking bugs that prevented Odoo integration from working
+- **Constructor Mismatches**: All FBS services now properly accept `solution_name` parameter
+- **Missing Methods**: Added `get_database_info()` and `discover_fields()` methods
+- **Method Return Values**: Methods no longer return `False`, now return proper error structures
+- **Response Format Standardization**: All methods return consistent response structures
+- **Database Table Creation**: Added `create_fbs_tables()` method for required FBS infrastructure
+
+### Added
+- **OdooClient Enhancements**: `get_database_info()` and `is_available()` methods
+- **DiscoveryService Improvements**: `discover_fields()` method and proper constructor
+- **DatabaseService Features**: `create_fbs_tables()` method for FBS table management
+- **Interface Consistency**: All interfaces properly pass `solution_name` to services
+
+### Changed
+- **Service Architecture**: Standardized constructor patterns across all services
+- **Error Handling**: Implemented robust error handling with proper response structures
+- **Method Signatures**: Standardized method signatures across all services and interfaces
+- **Database Integration**: Improved FBS table creation and management capabilities
+
+### Technical Improvements
+- **Constructor Consistency**: All services follow the same parameter pattern
+- **Error Response Standardization**: Consistent error response format across all methods
+- **Service Layer Alignment**: Proper alignment between interfaces and service implementations
+- **Database Infrastructure**: Complete FBS table creation system
+
+## [2.0.0] - 2024-08-27
 
 ### Added
 - Odoo-driven architecture implementation
