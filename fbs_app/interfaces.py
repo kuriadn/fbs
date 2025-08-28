@@ -356,38 +356,56 @@ class OdooIntegrationInterface:
     
     def discover_models(self, database_name: Optional[str] = None) -> Dict[str, Any]:
         """Discover Odoo models"""
-        return self._discovery_service.discover_models(database_name)
+        db_name = database_name or f"fbs_{self.solution_name}_db"
+        return self._discovery_service.discover_models(db_name)
     
     def discover_fields(self, model_name: str, database_name: Optional[str] = None) -> Dict[str, Any]:
         """Discover Odoo model fields"""
-        return self._discovery_service.discover_fields(model_name, database_name)
+        db_name = database_name or f"fbs_{self.solution_name}_db"
+        return self._discovery_service.discover_fields(model_name, db_name)
     
     def discover_modules(self, database_name: Optional[str] = None) -> Dict[str, Any]:
         """Discover Odoo modules"""
-        return self._discovery_service.discover_modules(database_name)
+        db_name = database_name or f"fbs_{self.solution_name}_db"
+        return self._discovery_service.discover_modules(db_name)
+    
+    def install_module(self, module_name: str, database_name: Optional[str] = None) -> Dict[str, Any]:
+        """Install Odoo module"""
+        db_name = database_name or f"fbs_{self.solution_name}_db"
+        return self._discovery_service.install_module(module_name, db_name)
+    
+    def uninstall_module(self, module_name: str, database_name: Optional[str] = None) -> Dict[str, Any]:
+        """Uninstall Odoo module"""
+        db_name = database_name or f"fbs_{self.solution_name}_db"
+        return self._discovery_service.uninstall_module(module_name, db_name)
     
     def get_records(self, model_name: str, filters: Optional[Dict[str, Any]] = None, 
-                   fields: Optional[List[str]] = None, limit: Optional[int] = None) -> Dict[str, Any]:
+                   fields: Optional[List[str]] = None, limit: Optional[int] = None, database_name: Optional[str] = None) -> Dict[str, Any]:
         """Get records from Odoo"""
         # Map filters to domain format expected by OdooClient
         domain = filters if filters else []
-        return self._odoo_client.list_records(model_name, '', self.solution_name, domain, fields, None, limit, 0)
+        db_name = database_name or f"fbs_{self.solution_name}_db"
+        return self._odoo_client.list_records(model_name, '', db_name, domain, fields, None, limit, 0)
     
-    def get_record(self, model_name: str, record_id: int, fields: Optional[List[str]] = None) -> Dict[str, Any]:
+    def get_record(self, model_name: str, record_id: int, fields: Optional[List[str]] = None, database_name: Optional[str] = None) -> Dict[str, Any]:
         """Get single record from Odoo"""
-        return self._odoo_client.get_record(model_name, record_id, '', self.solution_name, fields)
+        db_name = database_name or f"fbs_{self.solution_name}_db"
+        return self._odoo_client.get_record(model_name, record_id, '', db_name, fields)
     
-    def create_record(self, model_name: str, record_data: Dict[str, Any]) -> Dict[str, Any]:
+    def create_record(self, model_name: str, record_data: Dict[str, Any], database_name: Optional[str] = None) -> Dict[str, Any]:
         """Create record in Odoo"""
-        return self._odoo_client.create_record(model_name, record_data, '', self.solution_name)
+        db_name = database_name or f"fbs_{self.solution_name}_db"
+        return self._odoo_client.create_record(model_name, record_data, '', db_name)
     
-    def update_record(self, model_name: str, record_id: int, record_data: Dict[str, Any]) -> Dict[str, Any]:
+    def update_record(self, model_name: str, record_id: int, record_data: Dict[str, Any], database_name: Optional[str] = None) -> Dict[str, Any]:
         """Update record in Odoo"""
-        return self._odoo_client.update_record(model_name, record_id, record_data, '', self.solution_name)
+        db_name = database_name or f"fbs_{self.solution_name}_db"
+        return self._odoo_client.update_record(model_name, record_id, record_data, '', db_name)
     
-    def delete_record(self, model_name: str, record_id: int) -> Dict[str, Any]:
+    def delete_record(self, model_name: str, record_id: int, database_name: Optional[str] = None) -> Dict[str, Any]:
         """Delete record from Odoo"""
-        return self._odoo_client.delete_record(model_name, record_id, '', self.solution_name)
+        db_name = database_name or f"fbs_{self.solution_name}_db"
+        return self._odoo_client.delete_record(model_name, record_id, '', db_name)
     
     def execute_method(self, model_name: str, method_name: str, record_ids: List[int], 
                       parameters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -403,6 +421,124 @@ class OdooIntegrationInterface:
         from .services.database_service import DatabaseService
         db_service = DatabaseService(self.solution_name)
         return db_service.create_fbs_tables(database_name)
+    
+    def create_solution_databases(self) -> Dict[str, Any]:
+        """Create both Django and Odoo databases for the solution"""
+        from .services.database_service import DatabaseService
+        db_service = DatabaseService(self.solution_name)
+        
+        results = {}
+        
+        # Create Django database
+        django_result = db_service.create_database('django', self.solution_name)
+        results['django'] = django_result
+        
+        # Create Odoo database using the new method that properly initializes Odoo
+        odoo_result = db_service.create_odoo_database(self.solution_name, ['base', 'web'])
+        results['odoo'] = odoo_result
+        
+        # Check if both were successful
+        both_success = django_result.get('success', False) and odoo_result.get('success', False)
+        
+        return {
+            'success': both_success,
+            'message': f'Database creation completed for solution "{self.solution_name}"',
+            'solution_name': self.solution_name,
+            'results': results,
+            'django_db_name': f"djo_{self.solution_name}_db",
+            'odoo_db_name': f"fbs_{self.solution_name}_db"
+        }
+    
+    def install_modules(self, modules: List[str], database_name: str = None) -> Dict[str, Any]:
+        """
+        Install additional Odoo modules in the solution's database
+        
+        Args:
+            modules: List of modules to install
+            database_name: Optional database name override
+            
+        Returns:
+            Dict: Result of module installation
+        """
+        from .services.database_service import DatabaseService
+        db_service = DatabaseService(self.solution_name)
+        return db_service.install_odoo_modules(self.solution_name, modules, database_name)
+    
+    def get_available_modules(self) -> Dict[str, Any]:
+        """
+        Get list of available Odoo modules that can be installed
+        
+        Returns:
+            Dict: Available modules information
+        """
+        from .services.database_service import DatabaseService
+        db_service = DatabaseService(self.solution_name)
+        return db_service.get_available_odoo_modules()
+    
+    def create_solution_databases_with_modules(self, core_modules: List[str] = None, 
+                                             additional_modules: List[str] = None) -> Dict[str, Any]:
+        """
+        Create solution databases with specific module requirements
+        
+        Args:
+            core_modules: Core modules to install during initialization (default: ['base', 'web'])
+            additional_modules: Additional modules to install during initialization (not after)
+            
+        Returns:
+            Dict: Result of database creation with modules
+        """
+        from .services.database_service import DatabaseService
+        db_service = DatabaseService(self.solution_name)
+        
+        results = {}
+        
+        # Create Django database
+        django_result = db_service.create_database('django', self.solution_name)
+        results['django'] = django_result
+        
+        # Combine all modules for Odoo database creation
+        if core_modules is None:
+            core_modules = ['base', 'web']
+        
+        # Install ALL modules in one step during database creation
+        all_modules = core_modules + (additional_modules or [])
+        
+        print(f"🔧 Installing all modules in one step: {', '.join(all_modules)}")
+        
+        odoo_result = db_service.create_odoo_database(self.solution_name, all_modules)
+        results['odoo'] = odoo_result
+        
+        # Check if all operations were successful or if databases already exist
+        django_success = django_result.get('success', False) or 'already exists' in django_result.get('error', '')
+        odoo_success = odoo_result.get('success', False) or 'already exists' in odoo_result.get('error', '')
+        
+        all_success = django_success and odoo_success
+        
+        # Determine the appropriate message
+        if all_success:
+            if django_success and odoo_success:
+                if 'already exists' in django_result.get('error', '') or 'already exists' in odoo_result.get('error', ''):
+                    message = f'Solution databases already exist and are ready for solution "{self.solution_name}"'
+                else:
+                    message = f'Database creation with all modules completed for solution "{self.solution_name}"'
+            else:
+                message = f'Database creation with all modules completed for solution "{self.solution_name}"'
+        else:
+            message = f'Database creation failed for solution "{self.solution_name}"'
+        
+        return {
+            'success': all_success,
+            'message': message,
+            'solution_name': self.solution_name,
+            'results': results,
+            'django_db_name': f"djo_{self.solution_name}_db",
+            'odoo_db_name': f"fbs_{self.solution_name}_db",
+            'core_modules': core_modules,
+            'additional_modules': additional_modules or [],
+            'all_modules_installed': all_modules,
+            'django_exists': 'already exists' in django_result.get('error', ''),
+            'odoo_exists': 'already exists' in odoo_result.get('error', '')
+        }
 
 
 class VirtualFieldsInterface:
@@ -553,6 +689,10 @@ class FBSInterface:
     def __init__(self, solution_name: str, license_key: str = None):
         self.solution_name = solution_name
         self.license_key = license_key
+        
+        # Auto-generate database names
+        self.django_db_name = f"djo_{solution_name}_db"
+        self.odoo_db_name = f"fbs_{solution_name}_db"
         
         # Initialize licensing system (optional)
         if license_key is None:
@@ -730,6 +870,45 @@ class FBSInterface:
                 pass
         
         return {'analysis': 'No licensing system available'}
+
+    def create_solution_databases(self) -> Dict[str, Any]:
+        """Create both Django and Odoo databases for the solution"""
+        return self.odoo.create_solution_databases()
+    
+    def ensure_databases_exist(self) -> Dict[str, Any]:
+        """
+        Ensure that the required databases exist for this solution.
+        This method can be called by solutions to verify their database setup.
+        
+        Returns:
+            Dict with database verification results and guidance
+        """
+        from .services.database_service import DatabaseService
+        db_service = DatabaseService(self.solution_name)
+        return db_service.ensure_solution_databases(self.solution_name)
+    
+    def create_odoo_schema(self) -> Dict[str, Any]:
+        """
+        Create Odoo-specific schema and tables in the solution's database.
+        This should be called by solutions after they create their databases.
+        
+        Returns:
+            Dict with schema creation results
+        """
+        from .services.database_service import DatabaseService
+        db_service = DatabaseService(self.solution_name)
+        return db_service.create_odoo_schema(self.solution_name)
+    
+    def get_database_status(self) -> Dict[str, Any]:
+        """
+        Get the current status of databases for this solution.
+        
+        Returns:
+            Dict with database status information
+        """
+        from .services.database_service import DatabaseService
+        db_service = DatabaseService(self.solution_name)
+        return db_service.ensure_solution_databases(self.solution_name)
 
 
 # Convenience function for quick access

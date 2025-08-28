@@ -1,0 +1,30 @@
+# FBS Database Configuration
+# Copy this file to .env and fill in your actual values
+
+# Database Host and Port
+FBS_DB_HOST=localhost
+FBS_DB_PORT=5432
+
+# Database User Credentials
+# For Odoo operations (creating/managing Odoo databases)
+FBS_DB_USER=odoo
+FBS_DB_PASSWORD=four@One2
+
+# For Django operations (creating/managing Django databases)
+FBS_DJANGO_USER=fayvad
+FBS_DJANGO_PASSWORD=MeMiMo@0207
+
+# For Admin operations (superuser access)
+FBS_ADMIN_USER=postgres
+FBS_ADMIN_PASSWORD=MeMiMo@0207
+
+# Odoo Server Configuration (if different from database)
+ODOO_HOST=localhost
+ODOO_PORT=8069
+ODOO_USER=admin
+ODOO_PASSWORD=MeMiMo@0207
+
+# FBS System Configuration
+FBS_SOLUTION_NAME=default
+FBS_DEBUG=True
+FBS_LOG_LEVEL=INFO

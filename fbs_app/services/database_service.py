@@ -14,6 +14,7 @@ from typing import Dict, List, Optional, Tuple, Any
 from django.conf import settings
 from django.db import connections
 from django.db.utils import OperationalError
+from django.utils import timezone
 
 logger = logging.getLogger('fbs_app')
 
@@ -38,19 +39,65 @@ class DatabaseService:
             'system': 'fbs_system_db'
         })
         
-        # Base database configuration
-        self.base_db_config = self.fbs_config.get('default_database_config', {
-            'host': 'localhost',
-            'port': '5432',
-            'user': 'odoo',
-            'password': None  # Will be set from environment or settings
-        })
+        # Base database configuration - prioritize environment variables
+        self.base_db_config = {
+            'host': os.environ.get('FBS_DB_HOST', 'localhost'),
+            'port': os.environ.get('FBS_DB_PORT', '5432'),
+            'user': os.environ.get('FBS_DB_USER', 'odoo'),
+            'password': os.environ.get('FBS_DB_PASSWORD'),  # Required from environment
+        }
         
-        # Validate required configuration
+        # Different user configurations for different operations
+        self.user_configs = {
+            'odoo': {
+                'user': os.environ.get('FBS_DB_USER', 'odoo'),
+                'password': os.environ.get('FBS_DB_PASSWORD', 'four@One2')
+            },
+            'django': {
+                'user': os.environ.get('FBS_DJANGO_USER', 'fayvad'),
+                'password': os.environ.get('FBS_DJANGO_PASSWORD', 'MeMiMo@0207')
+            },
+            'admin': {
+                'user': os.environ.get('FBS_ADMIN_USER', 'postgres'),
+                'password': os.environ.get('FBS_ADMIN_PASSWORD', 'MeMiMo@0207')
+            }
+        }
+        
+        # Override with Django settings if provided
+        django_db_config = self.fbs_config.get('default_database_config', {})
+        for key in ['host', 'port', 'user', 'password']:
+            if django_db_config.get(key):
+                self.base_db_config[key] = django_db_config[key]
+        
+        # Validate required configuration (only if we need to connect to databases)
+        self._db_connection_required = True
+    
+    def _validate_db_connection(self):
+        """Validate database connection configuration"""
         if not self.base_db_config['password']:
             raise ValueError(
                 'Database password must be configured in FBS_APP.default_database_config or environment variables'
             )
+    
+    def _get_user_config(self, operation_type: str = 'odoo') -> Dict[str, str]:
+        """
+        Get user configuration for specific operation type
+        
+        Args:
+            operation_type: Type of operation ('odoo', 'django', 'admin')
+            
+        Returns:
+            Dict with user and password for the operation
+        """
+        if operation_type not in self.user_configs:
+            operation_type = 'odoo'  # Default to odoo
+        
+        return {
+            'host': self.base_db_config['host'],
+            'port': self.base_db_config['port'],
+            'user': self.user_configs[operation_type]['user'],
+            'password': self.user_configs[operation_type]['password']
+        }
     
     def get_database_names(self, solution_name):
         """Get all database names for a solution"""
@@ -122,14 +169,24 @@ class DatabaseService:
             Dict: Result of database creation
         """
         try:
+            # Validate database connection before proceeding
+            self._validate_db_connection()
+            
             database_name = self.get_database_name(database_type, solution_name)
             
-            # Connect to PostgreSQL server
+            # Connect to PostgreSQL server using appropriate user based on database type
+            if database_type == 'fbs':
+                # Use odoo user for Odoo databases
+                db_config = self._get_user_config('odoo')
+            else:
+                # Use fayvad user for Django databases
+                db_config = self._get_user_config('django')
+            
             conn = psycopg2.connect(
-                host=self.base_db_config['host'],
-                port=self.base_db_config['port'],
-                user=self.base_db_config['user'],
-                password=self.base_db_config['password'],
+                host=db_config['host'],
+                port=db_config['port'],
+                user=db_config['user'],
+                password=db_config['password'],
                 database='postgres'  # Connect to default database
             )
             
@@ -181,14 +238,24 @@ class DatabaseService:
             Dict: Result of database deletion
         """
         try:
+            # Validate database connection before proceeding
+            self._validate_db_connection()
+            
             database_name = self.get_database_name(database_type, solution_name)
             
-            # Connect to PostgreSQL server
+            # Connect to PostgreSQL server using appropriate user based on database type
+            if database_type == 'fbs':
+                # Use odoo user for Odoo databases
+                db_config = self._get_user_config('odoo')
+            else:
+                # Use fayvad user for Django databases
+                db_config = self._get_user_config('django')
+            
             conn = psycopg2.connect(
-                host=self.base_db_config['host'],
-                port=self.base_db_config['port'],
-                user=self.base_db_config['user'],
-                password=self.base_db_config['password'],
+                host=db_config['host'],
+                port=db_config['port'],
+                user=db_config['user'],
+                password=db_config['password'],
                 database='postgres'  # Connect to default database
             )
             
@@ -666,4 +733,510 @@ class DatabaseService:
                 'success': False,
                 'error': str(e),
                 'message': 'Failed to create FBS tables'
+            }
+    
+    def ensure_solution_databases(self, solution_name: str) -> Dict[str, Any]:
+        """
+        Ensure that the required databases exist for a solution.
+        This method can be called by solutions to verify/create their databases.
+        
+        Args:
+            solution_name: Name of the solution (e.g., 'rental', 'retail')
+            
+        Returns:
+            Dict with database status and creation results
+        """
+        try:
+            results = {}
+            
+            # Generate database names using FBS pattern
+            django_db_name = f"djo_{solution_name}_db"
+            odoo_db_name = f"fbs_{solution_name}_db"
+            
+            # Check Django database configuration
+            django_status = self._check_django_database(django_db_name)
+            results['django'] = django_status
+            
+            # Check Odoo database
+            odoo_status = self._check_odoo_database(odoo_db_name)
+            results['odoo'] = odoo_status
+            
+            # If Odoo database doesn't exist, provide guidance
+            if not odoo_status.get('exists', False):
+                results['odoo']['creation_guidance'] = {
+                    'message': f'Odoo database "{odoo_db_name}" does not exist',
+                    'action_required': 'Solution needs to create this database',
+                    'sql_command': f'CREATE DATABASE "{odoo_db_name}";',
+                    'postgres_command': f'createdb -U postgres "{odoo_db_name}"',
+                    'docker_command': f'docker exec -it postgres_container createdb -U postgres "{odoo_db_name}"'
+                }
+            
+            # If Django database not configured, provide guidance
+            if not django_status.get('configured', False):
+                results['django']['configuration_guidance'] = {
+                    'message': f'Django database "{django_db_name}" not configured',
+                    'action_required': 'Solution needs to add this database to Django settings',
+                    'example_config': {
+                        'ENGINE': 'django.db.backends.postgresql',
+                        'NAME': django_db_name,
+                        'USER': 'your_db_user',
+                        'PASSWORD': 'your_db_password',
+                        'HOST': 'localhost',
+                        'PORT': '5432'
+                    }
+                }
+            
+            return {
+                'success': True,
+                'message': f'Database verification completed for solution "{solution_name}"',
+                'solution_name': solution_name,
+                'database_names': {
+                    'django': django_db_name,
+                    'odoo': odoo_db_name
+                },
+                'results': results,
+                'timestamp': timezone.now().isoformat()
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'Failed to verify solution databases: {str(e)}',
+                'message': 'Database verification failed',
+                'solution_name': solution_name
+            }
+    
+    def _check_django_database(self, db_name: str) -> Dict[str, Any]:
+        """Check if Django database is configured"""
+        try:
+            from django.conf import settings
+            
+            if db_name in settings.DATABASES:
+                return {
+                    'name': db_name,
+                    'exists': True,
+                    'configured': True,
+                    'status': 'ready'
+                }
+            else:
+                return {
+                    'name': db_name,
+                    'exists': False,
+                    'configured': False,
+                    'status': 'not_configured'
+                }
+                
+        except Exception as e:
+            return {
+                'name': db_name,
+                'exists': False,
+                'configured': False,
+                'status': 'error',
+                'error': str(e)
+            }
+    
+    def _check_odoo_database(self, db_name: str) -> Dict[str, Any]:
+        """Check if Odoo database exists and is accessible"""
+        try:
+            # Try to connect to the database
+            import psycopg2
+            from django.conf import settings
+            
+            # Get database connection details from Django settings
+            db_config = settings.DATABASES.get('default', {})
+            
+            connection_params = {
+                'host': db_config.get('HOST', 'localhost'),
+                'port': db_config.get('PORT', '5432'),
+                'database': db_name,
+                'user': db_config.get('USER', 'postgres'),
+                'password': db_config.get('PASSWORD', ''),
+            }
+            
+            # Try to connect
+            conn = psycopg2.connect(**connection_params)
+            conn.close()
+            
+            return {
+                'name': db_name,
+                'exists': True,
+                'accessible': True,
+                'status': 'ready'
+            }
+            
+        except psycopg2.OperationalError as e:
+            if "does not exist" in str(e):
+                return {
+                    'name': db_name,
+                    'exists': False,
+                    'accessible': False,
+                    'status': 'not_exists',
+                    'error': str(e)
+                }
+            else:
+                return {
+                    'name': db_name,
+                    'exists': True,
+                    'accessible': False,
+                    'status': 'connection_failed',
+                    'error': str(e)
+                }
+        except Exception as e:
+            return {
+                'name': db_name,
+                'exists': False,
+                'accessible': False,
+                'status': 'error',
+                'error': str(e)
+            }
+    
+    def create_odoo_schema(self, solution_name: str, database_name: str = None) -> Dict[str, Any]:
+        """
+        Create Odoo-specific schema and tables in the solution's database.
+        This can be called by solutions after they create their databases.
+        
+        Args:
+            solution_name: Name of the solution
+            database_name: Optional database name override
+            
+        Returns:
+            Dict with schema creation results
+        """
+        if database_name is None:
+            database_name = f"fbs_{solution_name}_db"
+        
+        try:
+            # Create FBS-specific tables
+            fbs_tables_result = self.create_fbs_tables(database_name)
+            
+            # Create Odoo-specific tables if needed
+            odoo_tables_result = self._create_odoo_tables(database_name)
+            
+            return {
+                'success': True,
+                'message': f'Odoo schema created for solution "{solution_name}"',
+                'database': database_name,
+                'fbs_tables': fbs_tables_result,
+                'odoo_tables': odoo_tables_result,
+                'timestamp': timezone.now().isoformat()
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'Failed to create Odoo schema: {str(e)}',
+                'message': 'Schema creation failed',
+                'database': database_name
+            }
+    
+    def _create_odoo_tables(self, database_name: str) -> Dict[str, Any]:
+        """Create Odoo-specific tables in the database"""
+        try:
+            # This would create Odoo-specific tables
+            # For now, return a placeholder
+            return {
+                'status': 'placeholder',
+                'message': 'Odoo table creation not yet implemented',
+                'database': database_name
+            }
+        except Exception as e:
+            return {
+                'status': 'failed',
+                'error': str(e),
+                'database': database_name
+            }
+    
+    def create_odoo_database(self, solution_name: str, modules: List[str] = None) -> Dict[str, Any]:
+        """
+        Create and initialize an Odoo database using odoo-bin
+        
+        Args:
+            solution_name: Name of the solution
+            modules: List of modules to install during initialization
+            
+        Returns:
+            Dict: Result of Odoo database creation
+        """
+        try:
+            database_name = f"fbs_{solution_name}_db"
+            
+            # Default modules for basic Odoo functionality
+            if modules is None:
+                modules = ['base', 'web']
+            
+            # Check if database already exists
+            if self._check_odoo_database_exists(database_name):
+                return {
+                    'success': False,
+                    'error': f'Odoo database {database_name} already exists',
+                    'database_name': database_name
+                }
+            
+            # Prepare odoo-bin command
+            odoo_bin_path = '/opt/odoo/odoo/odoo-bin'
+            venv_python = '/opt/odoo/venv/bin/python'
+            
+            # Build command with proper arguments
+            cmd = [
+                venv_python,
+                odoo_bin_path,
+                '--database', database_name,
+                '--init', ','.join(modules),
+                '--stop-after-init',
+                '--no-http',
+                '--log-level', 'info'
+            ]
+            
+            # Set environment variables for odoo user
+            env = os.environ.copy()
+            env['PATH'] = f"/opt/odoo/venv/bin:{env.get('PATH', '')}"
+            
+            # Run odoo-bin command
+            import subprocess
+            result = subprocess.run(
+                cmd,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=300  # 5 minute timeout
+            )
+            
+            if result.returncode == 0:
+                logger.info(f"Odoo database {database_name} created successfully")
+                
+                # Change admin password from default to expected password
+                password_result = self._change_admin_password(database_name)
+                if password_result.get('success'):
+                    logger.info(f"Admin password changed successfully in {database_name}")
+                else:
+                    logger.warning(f"Admin password change failed: {password_result.get('error')}")
+                
+                return {
+                    'success': True,
+                    'database_name': database_name,
+                    'modules_installed': modules,
+                    'message': f'Odoo database {database_name} created and initialized successfully',
+                    'password_changed': password_result.get('success', False)
+                }
+            else:
+                logger.error(f"Odoo database creation failed: {result.stderr}")
+                return {
+                    'success': False,
+                    'error': f'Odoo database creation failed: {result.stderr}',
+                    'database_name': database_name,
+                    'stdout': result.stdout,
+                    'stderr': result.stderr
+                }
+                
+        except subprocess.TimeoutExpired:
+            logger.error(f"Odoo database creation timed out for {database_name}")
+            return {
+                'success': False,
+                'error': 'Odoo database creation timed out',
+                'database_name': database_name
+            }
+        except Exception as e:
+            logger.error(f"Error creating Odoo database: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e),
+                'database_name': database_name if 'database_name' in locals() else 'unknown'
+            }
+    
+    def _check_odoo_database_exists(self, database_name: str) -> bool:
+        """Check if Odoo database exists"""
+        try:
+            # Use odoo user to check database existence
+            odoo_config = self._get_user_config('odoo')
+            conn = psycopg2.connect(
+                host=odoo_config['host'],
+                port=odoo_config['port'],
+                user=odoo_config['user'],
+                password=odoo_config['password'],
+                database='postgres'  # Connect to default database
+            )
+            
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1 FROM pg_database WHERE datname = %s", (database_name,))
+            exists = cursor.fetchone()
+            
+            cursor.close()
+            conn.close()
+            
+            return bool(exists)
+            
+        except Exception as e:
+            logger.error(f"Error checking Odoo database existence: {str(e)}")
+            return False
+    
+    def _change_admin_password(self, database_name: str) -> Dict[str, Any]:
+        """Change admin user password from default to expected password"""
+        try:
+            # Use odoo user to connect to the newly created database
+            odoo_config = self._get_user_config('odoo')
+            conn = psycopg2.connect(
+                host=odoo_config['host'],
+                port=odoo_config['port'],
+                user=odoo_config['user'],
+                password=odoo_config['password'],
+                database=database_name
+            )
+            
+            cursor = conn.cursor()
+            
+            # Update admin user password
+            cursor.execute(
+                "UPDATE res_users SET password = %s WHERE login = 'admin'",
+                ('MeMiMo@0207',)
+            )
+            
+            if cursor.rowcount > 0:
+                conn.commit()
+                cursor.close()
+                conn.close()
+                
+                logger.info(f"Admin password updated successfully in {database_name}")
+                return {
+                    'success': True,
+                    'message': f'Admin password changed in {database_name}'
+                }
+            else:
+                cursor.close()
+                conn.close()
+                
+                logger.warning(f"No admin user found to update in {database_name}")
+                return {
+                    'success': False,
+                    'error': 'No admin user found to update'
+                }
+                
+        except Exception as e:
+            logger.error(f"Error changing admin password: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def install_odoo_modules(self, solution_name: str, modules: List[str], 
+                            database_name: str = None) -> Dict[str, Any]:
+        """
+        Install additional Odoo modules in an existing database
+        
+        Args:
+            solution_name: Name of the solution
+            modules: List of modules to install
+            database_name: Optional database name override
+            
+        Returns:
+            Dict: Result of module installation
+        """
+        try:
+            if database_name is None:
+                database_name = f"fbs_{solution_name}_db"
+            
+            # Check if database exists
+            if not self._check_odoo_database_exists(database_name):
+                return {
+                    'success': False,
+                    'error': f'Odoo database {database_name} does not exist',
+                    'database_name': database_name
+                }
+            
+            # Prepare odoo-bin command for module installation
+            odoo_bin_path = '/opt/odoo/odoo/odoo-bin'
+            venv_python = '/opt/odoo/venv/bin/python'
+            
+            # Build command for module installation
+            cmd = [
+                venv_python,
+                odoo_bin_path,
+                '--database', database_name,
+                '--init', ','.join(modules),
+                '--stop-after-init',
+                '--no-http',
+                '--log-level', 'info'
+            ]
+            
+            # Set environment variables for odoo user
+            env = os.environ.copy()
+            env['PATH'] = f"/opt/odoo/venv/bin:{env.get('PATH', '')}"
+            
+            # Run odoo-bin command
+            import subprocess
+            result = subprocess.run(
+                cmd,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=300  # 5 minute timeout
+            )
+            
+            if result.returncode == 0:
+                logger.info(f"Modules {modules} installed successfully in {database_name}")
+                return {
+                    'success': True,
+                    'database_name': database_name,
+                    'modules_installed': modules,
+                    'message': f'Modules {modules} installed successfully in {database_name}'
+                }
+            else:
+                logger.error(f"Module installation failed: {result.stderr}")
+                return {
+                    'success': False,
+                    'error': f'Module installation failed: {result.stderr}',
+                    'database_name': database_name,
+                    'stdout': result.stdout,
+                    'stderr': result.stderr
+                }
+                
+        except subprocess.TimeoutExpired:
+            logger.error(f"Module installation timed out for {database_name}")
+            return {
+                'success': False,
+                'error': 'Module installation timed out',
+                'database_name': database_name
+            }
+        except Exception as e:
+            logger.error(f"Error installing modules: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e),
+                'database_name': database_name if 'database_name' in locals() else 'unknown'
+            }
+    
+    def get_available_odoo_modules(self) -> Dict[str, Any]:
+        """
+        Get list of available Odoo modules that can be installed
+        
+        Returns:
+            Dict: Available modules information
+        """
+        try:
+            # This would typically query Odoo's module registry
+            # For now, return a curated list of common modules
+            available_modules = {
+                'core': ['base', 'web', 'mail', 'calendar', 'contacts'],
+                'sales': ['sale', 'sale_management', 'crm', 'point_of_sale'],
+                'inventory': ['stock', 'purchase', 'mrp', 'quality'],
+                'finance': ['account', 'accounting', 'payment', 'expense'],
+                'hr': ['hr', 'hr_attendance', 'hr_expense', 'hr_payroll'],
+                'manufacturing': ['mrp', 'mrp_workorder', 'mrp_plm'],
+                'ecommerce': ['website', 'website_sale', 'website_blog'],
+                'project': ['project', 'project_forecast', 'project_timesheet'],
+                'helpdesk': ['helpdesk', 'knowledge', 'survey'],
+                'custom': ['custom_module_1', 'custom_module_2']  # Placeholder for custom modules
+            }
+            
+            return {
+                'success': True,
+                'available_modules': available_modules,
+                'message': 'Available Odoo modules retrieved successfully'
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting available modules: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e),
+                'message': 'Failed to retrieve available modules'
             }

@@ -123,16 +123,11 @@ class DiscoveryService:
                     'message': 'Please provide a database name'
                 }
             
-            # Get module list from Odoo
-            result = self.odoo_client.execute_method(
+            # Get module list from Odoo using the dedicated search_read method
+            result = self.odoo_client.search_read_records(
                 model_name='ir.module.module',
-                method_name='search_read',
-                record_ids=[],
-                args=[],
-                kwargs={
-                    'domain': [('state', 'in', ['installed', 'to install', 'to upgrade'])],
-                    'fields': ['name', 'state', 'version', 'description', 'category_id', 'dependencies_id']
-                },
+                domain=[('state', 'in', ['installed', 'to install', 'to upgrade'])],
+                fields=['name', 'state', 'description', 'category_id', 'dependencies_id'],
                 database=db_name
             )
             
@@ -332,13 +327,30 @@ class DiscoveryService:
         processed_modules = []
         
         for module in modules:
+            # Handle category_id - could be integer or list
+            category_id = module.get('category_id')
+            if isinstance(category_id, list) and len(category_id) > 1:
+                category = category_id[1]
+            elif isinstance(category_id, int):
+                category = str(category_id)  # Convert ID to string
+            else:
+                category = ''
+            
+            # Handle dependencies_id - could be integer or list
+            dependencies_id = module.get('dependencies_id')
+            if isinstance(dependencies_id, list):
+                dependencies = [str(dep) if isinstance(dep, int) else str(dep[1]) if isinstance(dep, list) and len(dep) > 1 else str(dep) for dep in dependencies_id]
+            elif isinstance(dependencies_id, int):
+                dependencies = [str(dependencies_id)]
+            else:
+                dependencies = []
+            
             processed_module = {
                 'name': module.get('name', ''),
                 'state': module.get('state', 'unknown'),
-                'version': module.get('version', ''),
                 'description': module.get('description', ''),
-                'category': module.get('category_id', [False, ''])[1] if module.get('category_id') else '',
-                'dependencies': [dep[1] for dep in module.get('dependencies_id', [])] if module.get('dependencies_id') else []
+                'category': category,
+                'dependencies': dependencies
             }
             processed_modules.append(processed_module)
         

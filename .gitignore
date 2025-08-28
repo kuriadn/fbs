@@ -36,6 +36,10 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# FBS specific build artifacts
+fbs_suite.egg-info/
+UNKNOWN.egg-info/
+
 # PyInstaller
 *.manifest
 *.spec
@@ -317,12 +321,35 @@ dev_config.py
 !fbs_app/config_template.py
 !env.example
 
-# Keep test files (critical for CI/CD)
+# Test files - exclude all test files by default
+test_*.py
+*_test.py
+*_tests.py
+
+# Keep only essential production tests (explicitly include)
+!test_complete_workflow.py
+!test_rental_test_workflow.py
+!test_odoo_database_creation.py
+!test_module_management.py
+!test_admin_password.py
+
+# Exclude specific unnecessary test files
+test_installation.py
+test_simple_workflow.py
+test_v2.0.2_features.py
+test_automatic_database_naming.py
+test_rental_odoo_integration.py
+test_all_options.py
+test_admin_credentials.py
+fix_odoo_authentication.py
+diagnose_odoo_connection.py
+example_solution_usage.py
+
+# Keep core test infrastructure
 !fbs_app/tests/
 !*/tests/
-!test_*.py
-!*_test.py
-!*_tests.py
+!conftest.py
+!pytest.ini
 
 # Keep documentation
 !docs/
@@ -355,6 +382,16 @@ dev_config.py
 !CHANGELOG*
 !AUTHORS*
 !CONTRIBUTORS*
+
+# Exclude old installation scripts
+install_v2.0.1.py
+install_v2.0.0.py
+
+# Exclude old documentation files
+FBS_v2.0.2_DATABASE_NAMING_SUMMARY.md
+RELEASE_2.0.1.md
+SETUP_ENVIRONMENT.md
+INSTALL.md
 
 # =============================================================================
 # PROJECT SPECIFIC EXCEPTIONS

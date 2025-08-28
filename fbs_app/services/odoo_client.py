@@ -69,16 +69,16 @@ class OdooClient:
     
     def _get_odoo_credentials(self, database: str) -> Dict[str, str]:
         """Get Odoo credentials for the specified database"""
-        # Get credentials from FBS settings or Django settings
-        fbs_config = getattr(settings, 'FBS_APP', {})
+        import os
         
-        # Require explicit configuration - no hardcoded defaults
-        username = fbs_config.get('DATABASE_USER')
-        password = fbs_config.get('DATABASE_PASSWORD')
+        # Get credentials from environment variables (priority) or FBS settings
+        # For Odoo operations, use admin user; for database operations, use odoo user
+        username = os.environ.get('ODOO_USER', 'admin') or getattr(settings, 'FBS_APP', {}).get('ODOO_USER', 'admin')
+        password = os.environ.get('ODOO_PASSWORD', 'MeMiMo@0207') or getattr(settings, 'FBS_APP', {}).get('ODOO_PASSWORD', 'MeMiMo@0207')
         
         if not username or not password:
             raise OdooClientError(
-                'ODOO_DATABASE_USER and ODOO_DATABASE_PASSWORD must be configured in FBS_APP settings'
+                'ODOO_USER and ODOO_PASSWORD must be configured in environment variables or FBS_APP settings'
             )
         
         return {
@@ -344,9 +344,19 @@ class OdooClient:
             uid = self._authenticate(credentials) if credentials else None
             models = self._get_models_proxy()
             
-            # Prepare arguments
-            method_args = [record_ids] + (args or [])
-            method_kwargs = kwargs or {}
+            # Special handling for search_read method to avoid domain argument conflict
+            if method_name == 'search_read':
+                # For search_read, domain should be first positional argument, not in kwargs
+                domain = kwargs.pop('domain', []) if kwargs else []
+                fields = kwargs.get('fields', []) if kwargs else []
+                
+                # Prepare arguments: [domain], kwargs
+                method_args = [domain]
+                method_kwargs = {k: v for k, v in kwargs.items() if k != 'domain'}
+            else:
+                # Prepare arguments for other methods
+                method_args = [record_ids] + (args or [])
+                method_kwargs = kwargs or {}
             
             # Execute the method
             if uid and credentials:
@@ -431,6 +441,54 @@ class OdooClient:
                 'success': False,
                 'error': str(e),
                 'message': 'Failed to search records'
+            }
+    
+    def search_read_records(self, model_name: str, domain: List, fields: List = None, 
+                           database: str = None, limit: int = None, offset: int = None) -> Dict[str, Any]:
+        """Search and read records in Odoo model (Odoo v17 compatible)"""
+        try:
+            credentials = self._get_odoo_credentials(database) if database else {}
+            uid = self._authenticate(credentials) if credentials else None
+            models = self._get_models_proxy()
+            
+            # Default fields
+            search_fields = fields or ['id', 'name']
+            
+            # First search for record IDs
+            record_ids = models.execute_kw(
+                credentials['database'], uid, credentials['password'],
+                model_name, 'search',
+                [domain], {'limit': limit or 100, 'offset': offset or 0}
+            )
+            
+            if not record_ids:
+                return {
+                    'success': True,
+                    'data': [],
+                    'count': 0,
+                    'message': 'No records found'
+                }
+            
+            # Then read the records with the specified fields
+            records = models.execute_kw(
+                credentials['database'], uid, credentials['password'],
+                model_name, 'read',
+                [record_ids], {'fields': search_fields}
+            )
+            
+            return {
+                'success': True,
+                'data': records,
+                'count': len(records),
+                'message': f'Found {len(records)} records'
+            }
+            
+        except Exception as e:
+            logger.error(f"Error searching and reading records: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e),
+                'message': f'Failed to search and read records from {model_name}'
             }
     
     def count_records(self, model_name: str, domain: List, database: str) -> Dict[str, Any]:
