@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-FBS Suite v2.0.2 Installation Script
+FBS Suite v2.0.3 Installation Script
 =====================================
 
-This script installs FBS Suite v2.0.2 and verifies all components are working.
+This script installs FBS Suite v2.0.3 and verifies all components are working.
 Use this in your solutions to ensure FBS is properly installed and configured.
 
 Usage:
-    python3 install_v2.0.2.py
+    python3 install_v2.0.3.py
 
 Requirements:
     - Python 3.8+
@@ -101,8 +101,8 @@ def check_dependencies():
         print("   💡 Look for setup.py and pyproject.toml files")
 
 def install_fbs():
-    """Install FBS Suite v2.0.2"""
-    print_step(3, "Installing FBS Suite v2.0.2")
+    """Install FBS Suite v2.0.3"""
+    print_step(3, "Installing FBS Suite v2.0.3")
     
     # Check if we're in the FBS project directory
     current_dir = Path.cwd()
@@ -154,14 +154,14 @@ def install_fbs():
     
     # Try to install from Git repository (if it exists)
     print("   📦 Trying Git repository installation...")
-    if run_command("pip install --user git+https://github.com/fayvad/fbs.git@v2.0.2", 
+    if run_command("pip install --user git+https://github.com/kuriadn/fbs.git@v2.0.3", 
                    "User-specific Git install", check=False):
         print("   ✅ Installed from Git repository")
         return True
     
     # Try PyPI as last resort
     print("   📦 Trying PyPI installation...")
-    if run_command("pip install --user fbs-suite==2.0.2", "User-specific PyPI install", check=False):
+    if run_command("pip install --user fbs-suite==2.0.3", "User-specific PyPI install", check=False):
         print("   ✅ Installed from PyPI")
         return True
     
@@ -190,7 +190,7 @@ def verify_installation():
         if hasattr(fbs_app, '__version__'):
             print(f"   📊 FBS version: {fbs_app.__version__}")
         else:
-            print("   📊 FBS version: 2.0.2 (installed)")
+            print("   📊 FBS version: 2.0.3 (installed)")
     except Exception as e:
         print(f"   ⚠️  Could not determine version: {str(e)}")
     
@@ -327,9 +327,9 @@ def show_usage_examples():
 
 def main():
     """Main installation process"""
-    print_header("FBS Suite v2.0.2 Installation & Verification")
+    print_header("FBS Suite v2.0.3 Installation & Verification")
     
-    print("This script will install FBS Suite v2.0.2 and verify all components.")
+    print("This script will install FBS Suite v2.0.3 and verify all components.")
     print("Make sure you have Python 3.8+ and pip installed.")
     
     # Run all steps
@@ -340,7 +340,7 @@ def main():
     
     if test_basic_functionality():
         print("\n" + "=" * 80)
-        print("🎉 FBS Suite v2.0.2 Installation Successful!")
+        print("🎉 FBS Suite v2.0.3 Installation Successful!")
         print("=" * 80)
         
         show_usage_examples()

@@ -91,7 +91,7 @@ FBS follows [Semantic Versioning 2.0.0](https://semver.org/) with the format: `M
 
 **Examples**:
 - v2.0.1: Bug fixes and security updates
-- v2.0.2: Performance improvements
+- v2.0.3: Major Update & Bug Fixes - Complete MSME backend implementation
 - v2.0.3: Documentation fixes
 
 ## 📊 Version History
