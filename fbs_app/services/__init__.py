@@ -11,11 +11,12 @@ from .odoo_client import OdooClient, OdooClientError
 # from .discovery_service import DiscoveryService
 # from .workflow_service import WorkflowService
 # from .onboarding_service import OnboardingService
-from .msme_business_service import MSMEBusinessService
-from .msme_analytics_service import MSMEAnalyticsService
-from .msme_compliance_service import MSMEComplianceService
-from .msme_workflow_service import MSMEWorkflowService
-from .msme_accounting_service import MSMEAccountingService
+# Lazy imports to avoid Django configuration issues
+# from .msme_business_service import MSMEBusinessService
+# from .msme_analytics_service import MSMEAnalyticsService
+# from .msme_compliance_service import MSMEComplianceService
+# from .msme_workflow_service import MSMEWorkflowService
+# from .msme_accounting_service import MSMEAccountingService
 # from .business_logic_service import BusinessLogicService
 # from .bi_service import BusinessIntelligenceService
 # from .compliance_service import ComplianceService
@@ -33,11 +34,11 @@ __all__ = [
     # 'DiscoveryService',  # Lazy import
     # 'WorkflowService',  # Lazy import
     # 'OnboardingService',  # Lazy import
-    'MSMEBusinessService',
-    'MSMEAnalyticsService', 
-    'MSMEComplianceService',
-    'MSMEWorkflowService',
-    'MSMEAccountingService',
+    # 'MSMEBusinessService',  # Lazy import
+    # 'MSMEAnalyticsService',  # Lazy import
+    # 'MSMEComplianceService',  # Lazy import
+    # 'MSMEWorkflowService',  # Lazy import
+    # 'MSMEAccountingService',  # Lazy import
     # 'BusinessLogicService',  # Lazy import
     # 'BusinessIntelligenceService',  # Lazy import
     # 'ComplianceService',  # Lazy import

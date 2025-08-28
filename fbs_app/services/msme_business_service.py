@@ -10,17 +10,11 @@ Comprehensive service for MSME business management including:
 
 import logging
 from typing import Dict, List, Optional, Any
-from django.db import transaction
-from django.utils import timezone
-from django.contrib.auth.models import User
 from datetime import datetime, timedelta
 import json
 
-from ..models.msme import (
-    MSMESetupWizard, MSMEKPI, MSMECompliance, 
-    MSMEMarketing, MSMETemplate, MSMEAnalytics
-)
-from ..models.core import BusinessRule, CustomField
+# Lazy imports to avoid Django configuration issues
+# Models will be imported only when methods are called
 
 logger = logging.getLogger(__name__)
 
@@ -28,9 +22,10 @@ logger = logging.getLogger(__name__)
 class MSMEBusinessService:
     """Service for MSME business management operations"""
     
-    def __init__(self, user: User):
+    def __init__(self, solution_name: str, user=None):
+        self.solution_name = solution_name
         self.user = user
-        self.logger = logging.getLogger(f"{__name__}.{user.username}")
+        self.logger = logging.getLogger(f"{__name__}.{solution_name}")
     
     def create_business(self, business_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -42,15 +37,20 @@ class MSMEBusinessService:
         Returns:
             Dict containing business creation result and business ID
         """
+        # Lazy imports to avoid Django configuration issues
+        from django.db import transaction
+        from django.utils import timezone
+        from ..models.msme import MSMESetupWizard, MSMEKPI, MSMECompliance, MSMEMarketing, MSMETemplate, MSMEAnalytics
+        from ..models.core import BusinessRule, CustomField
+        
         try:
             with transaction.atomic():
                 # Create business setup wizard
                 setup_wizard = MSMESetupWizard.objects.create(
-                    user=self.user,
-                    company_name=business_data.get('company_name'),
+                    solution_name=self.solution_name,
+                    status='in_progress',
                     business_type=business_data.get('business_type', 'services'),
-                    setup_stage='initial',
-                    setup_data=business_data
+                    configuration=business_data
                 )
                 
                 # Create business profile
@@ -145,8 +145,11 @@ class MSMEBusinessService:
             self.logger.error(f"Failed to create business profile: {str(e)}")
             raise
     
-    def _initialize_business_kpis(self, business_data: Dict[str, Any]) -> List[MSMEKPI]:
+    def _initialize_business_kpis(self, business_data: Dict[str, Any]) -> List[Any]:
         """Initialize standard KPIs for the business type"""
+        # Lazy import
+        from ..models.msme import MSMEKPI
+        
         try:
             business_type = business_data.get('business_type', 'services')
             industry = business_data.get('industry', 'general')
@@ -157,15 +160,13 @@ class MSMEBusinessService:
             kpis = []
             for kpi_data in standard_kpis:
                 kpi = MSMEKPI.objects.create(
-                    user=self.user,
+                    solution_name=self.solution_name,
                     kpi_name=kpi_data['name'],
-                    kpi_description=kpi_data['description'],
                     kpi_type=kpi_data['type'],
                     current_value=kpi_data.get('current_value', 0),
                     target_value=kpi_data.get('target_value', 0),
                     unit=kpi_data.get('unit', ''),
-                    frequency=kpi_data.get('frequency', 'monthly'),
-                    is_active=True
+                    period=kpi_data.get('frequency', 'monthly')
                 )
                 kpis.append(kpi)
             
@@ -277,6 +278,10 @@ class MSMEBusinessService:
     
     def _setup_compliance_rules(self, business_data: Dict[str, Any]) -> List[Any]:
         """Setup compliance rules for the business"""
+        # Lazy import
+        from ..models.msme import MSMECompliance
+        from django.utils import timezone
+        
         try:
             business_type = business_data.get('business_type', 'services')
             industry = business_data.get('industry', 'general')
@@ -287,12 +292,12 @@ class MSMEBusinessService:
             rules = []
             for rule_data in compliance_rules:
                 rule = MSMECompliance.objects.create(
-                    user=self.user,
-                    compliance_name=rule_data['name'],
+                    solution_name=self.solution_name,
                     compliance_type=rule_data['type'],
                     due_date=rule_data['due_date'],
                     status='pending',
-                    compliance_data=rule_data
+                    requirements=rule_data.get('description', ''),
+                    notes=rule_data.get('description', '')
                 )
                 rules.append(rule)
             
@@ -348,8 +353,11 @@ class MSMEBusinessService:
         
         return base_rules
     
-    def _create_business_templates(self, business_data: Dict[str, Any]) -> List[MSMETemplate]:
+    def _create_business_templates(self, business_data: Dict[str, Any]) -> List[Any]:
         """Create business document templates"""
+        # Lazy import
+        from ..models.msme import MSMETemplate
+        
         try:
             business_type = business_data.get('business_type', 'services')
             
@@ -359,12 +367,10 @@ class MSMEBusinessService:
             templates = []
             for template_data in templates_data:
                 template = MSMETemplate.objects.create(
-                    user=self.user,
-                    template_name=template_data['name'],
-                    template_type=template_data['type'],
-                    template_content=template_data['content'],
-                    is_default=template_data.get('is_default', False),
-                    is_active=True
+                    name=template_data['name'],
+                    business_type=template_data['type'],
+                    description=template_data['content'],
+                    configuration=template_data
                 )
                 templates.append(template)
             
@@ -414,8 +420,12 @@ class MSMEBusinessService:
         
         return base_templates
     
-    def _initialize_business_analytics(self, business_data: Dict[str, Any]) -> List[MSMEAnalytics]:
+    def _initialize_business_analytics(self, business_data: Dict[str, Any]) -> List[Any]:
         """Initialize business analytics and metrics"""
+        # Lazy import
+        from ..models.msme import MSMEAnalytics
+        from django.utils import timezone
+        
         try:
             business_type = business_data.get('business_type', 'services')
             
@@ -425,10 +435,10 @@ class MSMEBusinessService:
             analytics = []
             for metric_data in analytics_data:
                 metric = MSMEAnalytics.objects.create(
-                    user=self.user,
+                    solution_name=self.solution_name,
                     metric_name=metric_data['name'],
                     metric_value=metric_data.get('value', 0),
-                    metric_date=timezone.now().date(),
+                    date=timezone.now().date(),
                     metric_type=metric_data['type']
                 )
                 analytics.append(metric)
@@ -591,20 +601,22 @@ class MSMEBusinessService:
     
     def get_business_kpis(self, business_id: int) -> Dict[str, Any]:
         """Get business KPIs and performance metrics"""
+        # Lazy import
+        from ..models.msme import MSMEKPI
+        
         try:
-            kpis = MSMEKPI.objects.filter(user=self.user, is_active=True)
+            kpis = MSMEKPI.objects.filter(solution_name=self.solution_name)
             
             kpi_data = []
             for kpi in kpis:
                 kpi_data.append({
                     'id': kpi.id,
                     'name': kpi.kpi_name,
-                    'description': kpi.kpi_description,
                     'type': kpi.kpi_type,
                     'current_value': float(kpi.current_value),
-                    'target_value': float(kpi.target_value) if kpi.target_value else None,
+                    'target_value': float(kpi.current_value) if kpi.target_value else None,
                     'unit': kpi.unit,
-                    'frequency': kpi.frequency,
+                    'period': kpi.period,
                     'performance': self._calculate_kpi_performance(kpi)
                 })
             
@@ -623,7 +635,7 @@ class MSMEBusinessService:
                 'message': 'Failed to get business KPIs'
             }
     
-    def _calculate_kpi_performance(self, kpi: MSMEKPI) -> Dict[str, Any]:
+    def _calculate_kpi_performance(self, kpi: Any) -> Dict[str, Any]:
         """Calculate KPI performance metrics"""
         if not kpi.target_value:
             return {'status': 'no_target', 'percentage': None}

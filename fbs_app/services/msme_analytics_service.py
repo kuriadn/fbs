@@ -34,9 +34,10 @@ logger = logging.getLogger(__name__)
 class MSMEAnalyticsService:
     """Service for MSME business analytics and reporting"""
     
-    def __init__(self, user: User):
+    def __init__(self, solution_name: str, user: User = None):
+        self.solution_name = solution_name
         self.user = user
-        self.logger = logging.getLogger(f"{__name__}.{user.username}")
+        self.logger = logging.getLogger(f"{__name__}.{solution_name}")
     
     def get_business_dashboard(self, business_id: int, period: str = 'monthly') -> Dict[str, Any]:
         """
@@ -114,13 +115,13 @@ class MSMEAnalyticsService:
         try:
             # Get cash flow data
             cash_entries = CashEntry.objects.filter(
-                created_by=self.user,
+                business_id=self.solution_name,
                 entry_date__range=[start_date.date(), end_date.date()]
             )
             
             # Get income/expense data
             income_expenses = IncomeExpense.objects.filter(
-                created_by=self.user,
+                business_id=self.solution_name,
                 transaction_date__range=[start_date.date(), end_date.date()]
             )
             
@@ -163,8 +164,7 @@ class MSMEAnalyticsService:
         try:
             # Get KPI data
             kpis = MSMEKPI.objects.filter(
-                user=self.user,
-                is_active=True,
+                solution_name=self.solution_name,
                 kpi_type='operational'
             )
             
@@ -195,8 +195,7 @@ class MSMEAnalyticsService:
         try:
             # Get customer KPI data
             customer_kpis = MSMEKPI.objects.filter(
-                user=self.user,
-                is_active=True,
+                solution_name=self.solution_name,
                 kpi_type='customer'
             )
             
@@ -221,7 +220,7 @@ class MSMEAnalyticsService:
         try:
             # Get compliance rules
             compliance_rules = MSMECompliance.objects.filter(
-                user=self.user
+                solution_name=self.solution_name
             )
             
             total_rules = compliance_rules.count()
@@ -253,8 +252,7 @@ class MSMEAnalyticsService:
         """Get KPI performance data"""
         try:
             kpis = MSMEKPI.objects.filter(
-                user=self.user,
-                is_active=True
+                solution_name=self.solution_name
             )
             
             kpi_performance = []
@@ -364,7 +362,7 @@ class MSMEAnalyticsService:
             
             # Check for overdue compliance items
             overdue_compliance = MSMECompliance.objects.filter(
-                user=self.user,
+                solution_name=self.solution_name,
                 status='pending',
                 due_date__lt=timezone.now().date()
             )
@@ -373,7 +371,7 @@ class MSMEAnalyticsService:
                 alerts.append({
                     'type': 'compliance_overdue',
                     'severity': 'high',
-                    'message': f"Compliance item '{item.compliance_name}' is overdue",
+                    'message': f"Compliance item '{item.compliance_type}' is overdue",
                     'due_date': item.due_date,
                     'days_overdue': (timezone.now().date() - item.due_date).days
                 })

@@ -20,8 +20,7 @@ import json
 from django.db.models import Sum
 
 from ..models.accounting import (
-    CashEntry, IncomeExpense, BasicLedger, TaxCalculation,
-    ChartOfAccounts, FinancialPeriod
+    CashEntry, IncomeExpense, BasicLedger, TaxCalculation
 )
 from ..models.msme import MSMEAnalytics
 
@@ -31,9 +30,10 @@ logger = logging.getLogger(__name__)
 class MSMEAccountingService:
     """Service for MSME accounting operations"""
     
-    def __init__(self, user: User):
+    def __init__(self, solution_name: str, user: User = None):
+        self.solution_name = solution_name
         self.user = user
-        self.logger = logging.getLogger(f"{__name__}.{user.username}")
+        self.logger = logging.getLogger(f"{__name__}.{solution_name}")
     
     def create_cash_entry(self, entry_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -48,14 +48,17 @@ class MSMEAccountingService:
         try:
             with transaction.atomic():
                 entry = CashEntry.objects.create(
-                    user=self.user,
+                    business_id=self.solution_name,
                     entry_type=entry_data.get('entry_type'),
                     amount=entry_data.get('amount'),
-                    currency=entry_data.get('currency', 'USD'),
                     description=entry_data.get('description'),
                     reference_number=entry_data.get('reference_number'),
                     entry_date=entry_data.get('entry_date', timezone.now().date()),
-                    entry_data=entry_data.get('additional_data', {})
+                    category=entry_data.get('category', 'general'),
+                    subcategory=entry_data.get('subcategory', ''),
+                    payment_method=entry_data.get('payment_method', 'other'),
+                    vendor_customer=entry_data.get('vendor_customer', ''),
+                    notes=entry_data.get('notes', '')
                 )
                 
                 # Update analytics
@@ -90,18 +93,17 @@ class MSMEAccountingService:
         try:
             with transaction.atomic():
                 transaction = IncomeExpense.objects.create(
-                    user=self.user,
+                    business_id=self.solution_name,
                     transaction_type=transaction_data.get('transaction_type'),
                     category=transaction_data.get('category'),
                     subcategory=transaction_data.get('subcategory'),
                     amount=transaction_data.get('amount'),
-                    currency=transaction_data.get('currency', 'USD'),
                     description=transaction_data.get('description'),
                     transaction_date=transaction_data.get('transaction_date', timezone.now().date()),
                     due_date=transaction_data.get('due_date'),
-                    status=transaction_data.get('status', 'pending'),
-                    payment_method=transaction_data.get('payment_method'),
-                    transaction_data=transaction_data.get('additional_data', {})
+                    payment_status=transaction_data.get('status', 'pending'),
+                    vendor_customer=transaction_data.get('vendor_customer', ''),
+                    notes=transaction_data.get('notes', '')
                 )
                 
                 # Update analytics
@@ -141,17 +143,16 @@ class MSMEAccountingService:
                 balance = debit_amount - credit_amount
                 
                 entry = BasicLedger.objects.create(
-                    user=self.user,
+                    business_id=self.solution_name,
                     account=ledger_data.get('account'),
                     account_type=ledger_data.get('account_type'),
                     description=ledger_data.get('description'),
                     debit_amount=debit_amount,
                     credit_amount=credit_amount,
                     balance=balance,
-                    currency=ledger_data.get('currency', 'USD'),
                     entry_date=ledger_data.get('entry_date', timezone.now().date()),
                     reference=ledger_data.get('reference'),
-                    ledger_data=ledger_data.get('additional_data', {})
+                    reference_type=ledger_data.get('reference_type', '')
                 )
                 
                 self.logger.info(f"Ledger entry created: {entry.account} - {entry.balance}")
@@ -184,7 +185,7 @@ class MSMEAccountingService:
         try:
             # Get cash entries in the period
             cash_entries = CashEntry.objects.filter(
-                user=self.user,
+                business_id=self.solution_name,
                 entry_date__range=[start_date.date(), end_date.date()]
             )
             
@@ -266,7 +267,7 @@ class MSMEAccountingService:
         try:
             # Get transactions in the period
             transactions = IncomeExpense.objects.filter(
-                user=self.user,
+                business_id=self.solution_name,
                 transaction_date__range=[start_date.date(), end_date.date()]
             )
             
@@ -435,19 +436,15 @@ class MSMEAccountingService:
                 net_tax_amount = tax_amount  # Can be adjusted for deductions
                 
                 tax_calc = TaxCalculation.objects.create(
-                    user=self.user,
+                    business_id=self.solution_name,
                     tax_type=tax_data.get('tax_type'),
-                    tax_period=tax_data.get('tax_period'),
-                    period_start=tax_data.get('period_start'),
-                    period_end=tax_data.get('period_end'),
-                    gross_amount=gross_amount,
+                    tax_period_start=tax_data.get('period_start'),
+                    tax_period_end=tax_data.get('period_end'),
+                    taxable_amount=gross_amount,
                     tax_rate=tax_rate,
                     tax_amount=tax_amount,
                     net_tax_amount=net_tax_amount,
-                    currency=tax_data.get('currency', 'USD'),
-                    calculation_date=tax_data.get('calculation_date', timezone.now().date()),
-                    due_date=tax_data.get('due_date'),
-                    calculation_data=tax_data.get('additional_data', {})
+                    due_date=tax_data.get('due_date')
                 )
                 
                 self.logger.info(f"Tax calculation created: {tax_calc.tax_type} - {tax_calc.tax_amount}")
@@ -466,97 +463,16 @@ class MSMEAccountingService:
                 'message': 'Failed to create tax calculation'
             }
     
-    def get_financial_periods(self) -> Dict[str, Any]:
-        """Get all financial periods"""
-        try:
-            periods = FinancialPeriod.objects.filter(
-                user=self.user
-            ).order_by('-start_date')
-            
-            period_list = []
-            for period in periods:
-                period_list.append({
-                    'id': period.id,
-                    'name': period.period_name,
-                    'type': period.period_type,
-                    'start_date': period.start_date,
-                    'end_date': period.end_date,
-                    'is_closed': period.is_closed,
-                    'closing_date': period.closing_date
-                })
-            
-            return {
-                'success': True,
-                'periods': period_list,
-                'total_periods': len(period_list)
-            }
-            
-        except Exception as e:
-            self.logger.error(f"Failed to get financial periods: {str(e)}")
-            return {
-                'success': False,
-                'error': str(e),
-                'message': 'Failed to get financial periods'
-            }
     
-    def close_financial_period(self, period_id: int, closing_notes: str = None) -> Dict[str, Any]:
-        """
-        Close a financial period
-        
-        Args:
-            period_id: Financial period ID
-            closing_notes: Notes about the closing
-            
-        Returns:
-            Dict containing closing result
-        """
-        try:
-            with transaction.atomic():
-                period = FinancialPeriod.objects.get(id=period_id, user=self.user)
-                
-                if period.is_closed:
-                    return {
-                        'success': False,
-                        'error': 'Period already closed',
-                        'message': 'Financial period is already closed'
-                    }
-                
-                # Close the period
-                period.is_closed = True
-                period.closing_date = timezone.now()
-                period.closing_notes = closing_notes
-                period.save()
-                
-                self.logger.info(f"Financial period closed: {period.period_name}")
-                
-                return {
-                    'success': True,
-                    'period_id': period_id,
-                    'message': 'Financial period closed successfully'
-                }
-                
-        except FinancialPeriod.DoesNotExist:
-            return {
-                'success': False,
-                'error': 'Financial period not found',
-                'message': 'Financial period not found'
-            }
-        except Exception as e:
-            self.logger.error(f"Failed to close financial period: {str(e)}")
-            return {
-                'success': False,
-                'error': str(e),
-                'message': 'Failed to close financial period'
-            }
     
     def _update_cash_analytics(self, entry: CashEntry):
         """Update cash flow analytics"""
         try:
             # Update MSME analytics for cash flow
             analytics, created = MSMEAnalytics.objects.get_or_create(
-                user=self.user,
+                solution_name=self.solution_name,
                 metric_name='Cash Flow',
-                metric_date=entry.entry_date,
+                date=entry.entry_date,
                 defaults={
                     'metric_value': 0,
                     'metric_type': 'cash_flow'
@@ -580,9 +496,9 @@ class MSMEAccountingService:
             # Update MSME analytics for income/expense
             metric_name = f"{transaction.transaction_type.title()} - {transaction.category}"
             analytics, created = MSMEAnalytics.objects.get_or_create(
-                user=self.user,
+                solution_name=self.solution_name,
                 metric_name=metric_name,
-                metric_date=transaction.transaction_date,
+                date=transaction.transaction_date,
                 defaults={
                     'metric_value': 0,
                     'metric_type': transaction.transaction_type
@@ -608,7 +524,7 @@ class MSMEAccountingService:
         try:
             # Get latest ledger entry for the account
             latest_entry = BasicLedger.objects.filter(
-                user=self.user,
+                business_id=self.solution_name,
                 account=account
             ).order_by('-entry_date').first()
             
@@ -652,7 +568,7 @@ class MSMEAccountingService:
             with transaction.atomic():
                 # Get all ledger entries up to reconciliation date
                 entries = BasicLedger.objects.filter(
-                    user=self.user,
+                    business_id=self.solution_name,
                     account=account,
                     entry_date__lte=reconciliation_date
                 ).order_by('entry_date')
@@ -669,11 +585,8 @@ class MSMEAccountingService:
                 for entry in entries:
                     running_balance += entry.debit_amount - entry.credit_amount
                 
-                # Update the latest entry as reconciled
-                latest_entry = entries.last()
-                latest_entry.is_reconciled = True
-                latest_entry.reconciliation_date = reconciliation_date
-                latest_entry.save()
+                # Note: Basic reconciliation - no reconciliation fields in model
+                # Could add these fields in future if needed
                 
                 return {
                     'success': True,

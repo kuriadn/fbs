@@ -18,7 +18,7 @@ from datetime import datetime, timedelta
 import json
 
 from ..models.msme import MSMECompliance
-from ..models.compliance import ComplianceRule, AuditTrail, ComplianceCheck
+from ..models.compliance import ComplianceRule, AuditTrail
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +26,10 @@ logger = logging.getLogger(__name__)
 class MSMEComplianceService:
     """Service for MSME compliance management operations"""
     
-    def __init__(self, user: User):
+    def __init__(self, solution_name: str, user: User = None):
+        self.solution_name = solution_name
         self.user = user
-        self.logger = logging.getLogger(f"{__name__}.{user.username}")
+        self.logger = logging.getLogger(f"{__name__}.{solution_name}")
     
     def create_compliance_rule(self, rule_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -43,15 +44,15 @@ class MSMEComplianceService:
         try:
             with transaction.atomic():
                 rule = MSMECompliance.objects.create(
-                    user=self.user,
-                    compliance_name=rule_data.get('name'),
+                    solution_name=self.solution_name,
                     compliance_type=rule_data.get('type'),
                     due_date=rule_data.get('due_date'),
                     status='pending',
-                    compliance_data=rule_data
+                    requirements=rule_data.get('description', ''),
+                    notes=rule_data.get('description', '')
                 )
                 
-                self.logger.info(f"Compliance rule created: {rule.compliance_name}")
+                self.logger.info(f"Compliance rule created: {rule.compliance_type}")
                 
                 return {
                     'success': True,
@@ -71,7 +72,7 @@ class MSMEComplianceService:
         """Get comprehensive compliance overview"""
         try:
             # Get all compliance rules
-            compliance_rules = MSMECompliance.objects.filter(user=self.user)
+            compliance_rules = MSMECompliance.objects.filter(solution_name=self.solution_name)
             
             # Calculate statistics
             total_rules = compliance_rules.count()
@@ -97,7 +98,7 @@ class MSMEComplianceService:
             for rule in upcoming_deadlines:
                 upcoming_list.append({
                     'id': rule.id,
-                    'name': rule.compliance_name,
+                    'name': rule.compliance_type,
                     'type': rule.compliance_type,
                     'due_date': rule.due_date,
                     'days_remaining': (rule.due_date - timezone.now().date()).days
@@ -113,7 +114,7 @@ class MSMEComplianceService:
             for rule in overdue_items:
                 overdue_list.append({
                     'id': rule.id,
-                    'name': rule.compliance_name,
+                    'name': rule.compliance_type,
                     'type': rule.compliance_type,
                     'due_date': rule.due_date,
                     'days_overdue': (timezone.now().date() - rule.due_date).days
@@ -155,20 +156,20 @@ class MSMEComplianceService:
         """
         try:
             with transaction.atomic():
-                rule = MSMECompliance.objects.get(id=rule_id, user=self.user)
+                rule = MSMECompliance.objects.get(id=rule_id, solution_name=self.solution_name)
                 
                 old_status = rule.status
                 rule.status = new_status
                 
                 if notes:
-                    rule.compliance_data['notes'] = notes
+                    rule.notes = notes
                 
                 rule.save()
                 
                 # Log the status change
                 self._log_compliance_change(rule, old_status, new_status, notes)
                 
-                self.logger.info(f"Compliance rule status updated: {rule.compliance_name} -> {new_status}")
+                self.logger.info(f"Compliance rule status updated: {rule.compliance_type} -> {new_status}")
                 
                 return {
                     'success': True,
@@ -198,15 +199,18 @@ class MSMEComplianceService:
         try:
             # Create audit trail entry
             AuditTrail.objects.create(
-                user=self.user,
-                action=f"Compliance status changed from {old_status} to {new_status}",
-                action_type='update',
-                resource_type='msme_compliance',
-                resource_id=str(rule.id),
-                old_values={'status': old_status},
-                new_values={'status': new_status, 'notes': notes},
-                ip_address='127.0.0.1',  # Placeholder
-                user_agent='MSME Compliance Service'
+                solution_name=self.solution_name,
+                record_type='system',
+                record_id=str(rule.id),
+                action='update',
+                user_id=str(self.user.id) if self.user else 'system',
+                details={
+                    'old_status': old_status,
+                    'new_status': new_status,
+                    'notes': notes,
+                    'resource_type': 'msme_compliance'
+                },
+                ip_address='127.0.0.1'  # Placeholder
             )
         except Exception as e:
             self.logger.warning(f"Failed to log compliance change: {str(e)}")
@@ -237,7 +241,7 @@ class MSMEComplianceService:
             
             # Get compliance rules for the month
             compliance_rules = MSMECompliance.objects.filter(
-                user=self.user,
+                solution_name=self.solution_name,
                 due_date__range=[start_date, end_date]
             ).order_by('due_date')
             
@@ -250,7 +254,7 @@ class MSMEComplianceService:
                 
                 calendar_data[date_key].append({
                     'id': rule.id,
-                    'name': rule.compliance_name,
+                    'name': rule.compliance_type,
                     'type': rule.compliance_type,
                     'status': rule.status,
                     'due_date': rule.due_date
@@ -282,7 +286,7 @@ class MSMEComplianceService:
             Dict containing check result
         """
         try:
-            rule = MSMECompliance.objects.get(id=rule_id, user=self.user)
+            rule = MSMECompliance.objects.get(id=rule_id, solution_name=self.solution_name)
             
             # Perform compliance check based on rule type
             check_result = self._perform_compliance_check(rule)
@@ -297,11 +301,7 @@ class MSMEComplianceService:
             
             # Update rule
             rule.status = new_status
-            rule.compliance_data['last_check'] = {
-                'timestamp': timezone.now().isoformat(),
-                'result': check_result,
-                'passed': check_result['passed']
-            }
+            rule.notes = f"Last check: {timezone.now().isoformat()} - {'Passed' if check_result['passed'] else 'Failed'}"
             rule.save()
             
             return {
@@ -330,7 +330,7 @@ class MSMEComplianceService:
         """Perform actual compliance check based on rule type"""
         try:
             rule_type = rule.compliance_type
-            check_data = rule.compliance_data
+            check_data = {'requirements': rule.requirements, 'notes': rule.notes}
             
             if rule_type == 'tax':
                 return self._check_tax_compliance(check_data)
@@ -425,7 +425,7 @@ class MSMEComplianceService:
         try:
             # Get compliance rules in the period
             compliance_rules = MSMECompliance.objects.filter(
-                user=self.user,
+                solution_name=self.solution_name,
                 due_date__range=[start_date.date(), end_date.date()]
             )
             
@@ -533,18 +533,13 @@ class MSMEComplianceService:
             Dict containing reminder setup result
         """
         try:
-            rule = MSMECompliance.objects.get(id=rule_id, user=self.user)
+            rule = MSMECompliance.objects.get(id=rule_id, solution_name=self.solution_name)
             
             # Calculate reminder date
             reminder_date = rule.due_date - timedelta(days=reminder_days)
             
             # Update rule with reminder information
-            rule.compliance_data['reminder'] = {
-                'enabled': True,
-                'reminder_days': reminder_days,
-                'reminder_date': reminder_date.isoformat(),
-                'sent': False
-            }
+            rule.notes = f"Reminder: {reminder_days} days before due date, set for {reminder_date.isoformat()}"
             rule.save()
             
             return {
@@ -575,7 +570,7 @@ class MSMEComplianceService:
             
             # Check for overdue items
             overdue_rules = MSMECompliance.objects.filter(
-                user=self.user,
+                solution_name=self.solution_name,
                 status='pending',
                 due_date__lt=timezone.now().date()
             )
@@ -594,16 +589,16 @@ class MSMEComplianceService:
                     'type': 'compliance_overdue',
                     'severity': severity,
                     'rule_id': rule.id,
-                    'rule_name': rule.compliance_name,
+                    'rule_name': rule.compliance_type,
                     'rule_type': rule.compliance_type,
                     'due_date': rule.due_date,
                     'days_overdue': days_overdue,
-                    'message': f"Compliance item '{rule.compliance_name}' is {days_overdue} days overdue"
+                    'message': f"Compliance item '{rule.compliance_type}' is {days_overdue} days overdue"
                 })
             
             # Check for upcoming deadlines
             upcoming_rules = MSMECompliance.objects.filter(
-                user=self.user,
+                solution_name=self.solution_name,
                 status='pending',
                 due_date__range=[timezone.now().date(), timezone.now().date() + timedelta(days=7)]
             )
@@ -615,11 +610,11 @@ class MSMEComplianceService:
                     'type': 'compliance_upcoming',
                     'severity': 'low',
                     'rule_id': rule.id,
-                    'rule_name': rule.compliance_name,
+                    'rule_name': rule.compliance_type,
                     'rule_type': rule.compliance_type,
                     'due_date': rule.due_date,
                     'days_remaining': days_remaining,
-                    'message': f"Compliance item '{rule.compliance_name}' due in {days_remaining} days"
+                    'message': f"Compliance item '{rule.compliance_type}' due in {days_remaining} days"
                 })
             
             return alerts
