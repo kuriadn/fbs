@@ -1,8 +1,8 @@
-# FBS Suite v2.0.3 - Solution Integration Guide
+# FBS Suite v2.0.4 - Solution Integration Guide
 
 ## 🚀 Overview
 
-FBS Suite v2.0.3 is a complete, production-ready business management platform that provides:
+FBS Suite v2.0.4 is a complete, production-ready business management platform that provides:
 - **Odoo ERP Integration** with automatic database management
 - **Document Management System (DMS)** for file handling
 - **License Management** for subscription and access control
@@ -17,16 +17,16 @@ FBS Suite v2.0.3 is a complete, production-ready business management platform th
 pip install -e .
 
 # Install from Git repository
-pip install git+https://github.com/kuriadn/fbs.git@v2.0.3
+pip install git+https://github.com/kuriadn/fbs.git@v2.0.4
 
 # Install from PyPI (when available)
-pip install fbs-suite==2.0.3
+pip install fbs-suite==2.0.4
 ```
 
 ### Automated Installation
 Use our installation script for complete setup and verification:
 ```bash
-python3 install_v2.0.3.py
+python3 install_v2.0.4.py
 ```
 
 ## 🔧 Basic Usage
@@ -300,7 +300,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 - **v2.0.0**: Initial Odoo integration and solution-aware architecture
 - **v2.0.1**: Packaging and installation improvements
-- **v2.0.3**: Complete working system with all features and bug fixes
+- **v2.0.4**: Complete working system with all features and bug fixes
 
 ## 📞 Support
 
@@ -311,7 +311,7 @@ For issues and questions:
 
 ## 🎯 Next Steps
 
-1. **Install FBS Suite**: Use `install_v2.0.3.py`
+1. **Install FBS Suite**: Use `install_v2.0.4.py`
 2. **Test Integration**: Run `test_complete_workflow.py`
 3. **Create Your Solution**: Initialize with your solution name
 4. **Set Up Databases**: Configure required Odoo modules
@@ -319,4 +319,4 @@ For issues and questions:
 
 ---
 
-**FBS Suite v2.0.3** - Ready for production use! 🚀
+**FBS Suite v2.0.4** - Ready for production use! 🚀

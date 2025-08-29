@@ -50,7 +50,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
             
             # Log to database if RequestLog model is available
             try:
-                from .models import RequestLog
+                from ..models.core import RequestLog
                 
                 # Only log if we have a user or database context
                 if user_id or database_name:
@@ -93,7 +93,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
             
             # Log to database if RequestLog model is available
             try:
-                from .models import RequestLog
+                from ..models.core import RequestLog
                 
                 # Only log if we have a user or database context
                 if (user and user.is_authenticated) or database_name:
