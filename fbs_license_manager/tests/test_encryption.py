@@ -5,7 +5,7 @@ Tests for license key encryption functionality
 import pytest
 from django.test import TestCase
 from django.conf import settings
-from ..models import SolutionLicense
+from ..models import LICSolutionLicense
 
 
 class LicenseEncryptionTest(TestCase):
@@ -21,7 +21,7 @@ class LicenseEncryptionTest(TestCase):
     def test_license_key_encryption(self):
         """Test that license keys are automatically encrypted"""
         # Create license with plain text key
-        license_obj = SolutionLicense.objects.create(
+        license_obj = LICSolutionLicense.objects.create(
             solution_name=self.solution_name,
             license_type='trial',
             license_key=self.test_license_key,
@@ -36,7 +36,7 @@ class LicenseEncryptionTest(TestCase):
     def test_license_key_decryption(self):
         """Test that license keys can be decrypted"""
         # Create license with plain text key
-        license_obj = SolutionLicense.objects.create(
+        license_obj = LICSolutionLicense.objects.create(
             solution_name=self.solution_name,
             license_type='trial',
             license_key=self.test_license_key,
@@ -55,7 +55,7 @@ class LicenseEncryptionTest(TestCase):
             delattr(settings, 'FBS_LICENSE_ENCRYPTION_KEY')
         
         # Create license - should generate key automatically
-        license_obj = SolutionLicense.objects.create(
+        license_obj = LICSolutionLicense.objects.create(
             solution_name=self.solution_name,
             license_type='trial',
             license_key=self.test_license_key,
@@ -71,7 +71,7 @@ class LicenseEncryptionTest(TestCase):
     def test_empty_license_key(self):
         """Test handling of empty license keys"""
         # Create license without key
-        license_obj = SolutionLicense.objects.create(
+        license_obj = LICSolutionLicense.objects.create(
             solution_name=self.solution_name,
             license_type='trial',
             license_key=None,
@@ -86,7 +86,7 @@ class LicenseEncryptionTest(TestCase):
     def test_encryption_fallback(self):
         """Test encryption fallback behavior"""
         # Create license with plain text key
-        license_obj = SolutionLicense.objects.create(
+        license_obj = LICSolutionLicense.objects.create(
             solution_name=self.solution_name,
             license_type='trial',
             license_key=self.test_license_key,

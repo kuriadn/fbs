@@ -195,10 +195,10 @@ def file_validate(request):
         service = FileService(company_id)
         
         # Get document type
-        from ..models import DocumentType
+        from ..models import DMSDocumentType
         try:
-            document_type = DocumentType.objects.get(id=document_type_id)
-        except DocumentType.DoesNotExist:
+            document_type = DMSDocumentType.objects.get(id=document_type_id)
+        except DMSDocumentType.DoesNotExist:
             return JsonResponse({
                 'success': False,
                 'error': 'Invalid document type'

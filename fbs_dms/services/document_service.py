@@ -13,7 +13,7 @@ from django.utils import timezone
 from django.db.models import Q, QuerySet
 from django.conf import settings
 
-from ..models import Document, DocumentType, DocumentCategory, DocumentTag, FileAttachment
+from ..models import DMSDocument, DMSDocumentType, DMSDocumentCategory, DMSDocumentTag, DMSFileAttachment
 
 logger = logging.getLogger('fbs_dms')
 
@@ -29,8 +29,8 @@ class DocumentService:
         self, 
         document_data: Dict[str, Any], 
         user: User,
-        file_obj=None
-    ) -> Document:
+                file_obj=None
+    ) -> DMSDocument:
         """Create a new document"""
         try:
             with transaction.atomic():
@@ -55,7 +55,7 @@ class DocumentService:
                         raise ValidationError("File does not meet document type requirements")
                 
                 # Create document
-                document = Document.objects.create(
+                document = DMSDocument.objects.create(
                     name=document_data['name'],
                     title=document_data['title'],
                     document_type=doc_type,
@@ -71,7 +71,7 @@ class DocumentService:
                 
                 # Add tags if provided
                 if 'tag_ids' in document_data:
-                    tags = DocumentTag.objects.filter(
+                    tags = DMSDocumentTag.objects.filter(
                         id__in=document_data['tag_ids'],
                         is_active=True
                     )
@@ -96,7 +96,7 @@ class DocumentService:
         document_id: int, 
         update_data: Dict[str, Any], 
         user: User
-    ) -> Document:
+    ) -> DMSDocument:
         """Update an existing document"""
         try:
             document = self._get_document(document_id)
@@ -115,7 +115,7 @@ class DocumentService:
                 
                 # Update tags if provided
                 if 'tag_ids' in update_data:
-                    tags = DocumentTag.objects.filter(
+                    tags = DMSDocumentTag.objects.filter(
                         id__in=update_data['tag_ids'],
                         is_active=True
                     )
@@ -162,7 +162,7 @@ class DocumentService:
             logger.error(f"Failed to delete document: {str(e)}")
             raise
     
-    def get_document(self, document_id: int) -> Optional[Document]:
+    def get_document(self, document_id: int) -> Optional[DMSDocument]:
         """Get a document by ID"""
         return self._get_document(document_id)
     
@@ -171,9 +171,9 @@ class DocumentService:
         filters: Dict[str, Any] = None,
         ordering: str = '-created_at',
         limit: int = None
-    ) -> QuerySet[Document]:
+    ) -> QuerySet[DMSDocument]:
         """List documents with optional filtering"""
-        queryset = Document.objects.filter(company_id=self.company_id)
+        queryset = DMSDocument.objects.filter(company_id=self.company_id)
         
         if filters:
             queryset = self._apply_filters(queryset, filters)
@@ -190,9 +190,9 @@ class DocumentService:
         query: str, 
         filters: Dict[str, Any] = None,
         limit: int = 50
-    ) -> QuerySet[Document]:
+    ) -> QuerySet[DMSDocument]:
         """Search documents by text query"""
-        queryset = Document.objects.filter(company_id=self.company_id)
+        queryset = DMSDocument.objects.filter(company_id=self.company_id)
         
         # Text search
         if query:
@@ -208,53 +208,53 @@ class DocumentService:
         
         return queryset.order_by('-created_at')[:limit]
     
-    def get_document_types(self) -> QuerySet[DocumentType]:
+    def get_document_types(self) -> QuerySet[DMSDocumentType]:
         """Get all active document types"""
-        return DocumentType.objects.filter(is_active=True).order_by('name')
+        return DMSDocumentType.objects.filter(is_active=True).order_by('name')
     
-    def get_document_categories(self) -> QuerySet[DocumentCategory]:
+    def get_document_categories(self) -> QuerySet[DMSDocumentCategory]:
         """Get all active document categories"""
-        return DocumentCategory.objects.filter(is_active=True).order_by('sequence', 'name')
+        return DMSDocumentCategory.objects.filter(is_active=True).order_by('sequence', 'name')
     
-    def get_document_tags(self) -> QuerySet[DocumentTag]:
+    def get_document_tags(self) -> QuerySet[DMSDocumentTag]:
         """Get all active document tags"""
-        return DocumentTag.objects.filter(is_active=True).order_by('name')
+        return DMSDocumentTag.objects.filter(is_active=True).order_by('name')
     
-    def _get_document(self, document_id: int) -> Optional[Document]:
+    def _get_document(self, document_id: int) -> Optional[DMSDocument]:
         """Get document by ID with company check"""
         try:
-            return Document.objects.get(
+            return DMSDocument.objects.get(
                 id=document_id,
                 company_id=self.company_id
             )
-        except Document.DoesNotExist:
+        except DMSDocument.DoesNotExist:
             return None
     
-    def _get_document_type(self, type_id: int) -> Optional[DocumentType]:
+    def _get_document_type(self, type_id: int) -> Optional[DMSDocumentType]:
         """Get document type by ID"""
         try:
-            return DocumentType.objects.get(id=type_id, is_active=True)
-        except DocumentType.DoesNotExist:
+            return DMSDocumentType.objects.get(id=type_id, is_active=True)
+        except DMSDocumentType.DoesNotExist:
             return None
     
-    def _get_document_category(self, category_id: int) -> Optional[DocumentCategory]:
+    def _get_document_category(self, category_id: int) -> Optional[DMSDocumentCategory]:
         """Get document category by ID"""
         try:
-            return DocumentCategory.objects.get(id=category_id, is_active=True)
-        except DocumentCategory.DoesNotExist:
+            return DMSDocumentCategory.objects.get(id=category_id, is_active=True)
+        except DMSDocumentCategory.DoesNotExist:
             return None
     
-    def _create_file_attachment(self, file_obj, user: User) -> FileAttachment:
+    def _create_file_attachment(self, file_obj, user: User) -> DMSFileAttachment:
         """Create file attachment"""
-        from ..models import FileAttachment
+        from ..models import DMSFileAttachment
         
-        return FileAttachment.objects.create(
+        return DMSFileAttachment.objects.create(
             file=file_obj,
             uploaded_by=user,
             company_id=self.company_id
         )
     
-    def _validate_file_for_type(self, attachment: FileAttachment, doc_type: DocumentType) -> bool:
+    def _validate_file_for_type(self, attachment: DMSFileAttachment, doc_type: DMSDocumentType) -> bool:
         """Validate file against document type requirements"""
         # Check file extension
         if not doc_type.is_extension_allowed(attachment.original_filename):
@@ -440,7 +440,7 @@ class DocumentService:
             logger.error(f"Failed to approve document: {str(e)}")
             raise
     
-    def reject_document(self, document_id: int, user: User, comments: str = '') -> Document:
+    def reject_document(self, document_id: int, user: User, comments: str = '') -> DMSDocument:
         """Reject a document"""
         try:
             document = self._get_document(document_id)
@@ -472,10 +472,10 @@ class DocumentService:
         state: str = None,
         search: str = None,
         limit: int = 50
-    ) -> QuerySet[Document]:
+    ) -> QuerySet[DMSDocument]:
         """Get documents with optional filtering"""
         try:
-            queryset = Document.objects.using(self.solution_db).filter(company_id=self.company_id)
+            queryset = DMSDocument.objects.using(self.solution_db).filter(company_id=self.company_id)
             
             if document_type:
                 queryset = queryset.filter(document_type__name=document_type)
@@ -497,9 +497,9 @@ class DocumentService:
             
         except Exception as e:
             logger.error(f"Failed to get documents: {str(e)}")
-            return Document.objects.none()
+            return DMSDocument.objects.none()
     
-    def _can_approve_document(self, document: Document, user: User) -> bool:
+    def _can_approve_document(self, document: DMSDocument, user: User) -> bool:
         """Check if user can approve document"""
         # Document creator can approve
         if document.created_by == user:
@@ -518,7 +518,7 @@ class DocumentService:
         
         return False
     
-    def _can_reject_document(self, document: Document, user: User) -> bool:
+    def _can_reject_document(self, document: DMSDocument, user: User) -> bool:
         """Check if user can approve document"""
         # Document creator can approve
         if document.created_by == user:

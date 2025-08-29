@@ -13,7 +13,7 @@ from django.utils import timezone
 import hashlib
 
 
-class FileAttachment(models.Model):
+class DMSFileAttachment(models.Model):
     """File attachment model for document storage"""
     
     file = models.FileField(
@@ -46,7 +46,7 @@ class FileAttachment(models.Model):
     
     class Meta:
         app_label = 'fbs_dms'
-        db_table = 'fbs_dms_file_attachment'
+        db_table = 'dms_file_attachment'
         verbose_name = 'File Attachment'
         verbose_name_plural = 'File Attachments'
         ordering = ['-created_at']

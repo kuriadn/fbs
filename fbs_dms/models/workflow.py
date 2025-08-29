@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 
-class DocumentWorkflow(models.Model):
+class DMSDocumentWorkflow(models.Model):
     """Document workflow instance"""
     
     STATUS_CHOICES = [
@@ -20,7 +20,7 @@ class DocumentWorkflow(models.Model):
     ]
     
     document = models.OneToOneField(
-        'Document',
+        'DMSDocument',
         on_delete=models.CASCADE,
         related_name='workflow'
     )
@@ -33,7 +33,7 @@ class DocumentWorkflow(models.Model):
     started_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     current_step = models.ForeignKey(
-        'DocumentApproval',
+        'DMSDocumentApproval',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -44,7 +44,7 @@ class DocumentWorkflow(models.Model):
     
     class Meta:
         app_label = 'fbs_dms'
-        db_table = 'fbs_dms_document_workflow'
+        db_table = 'dms_document_workflow'
         verbose_name = 'Document Workflow'
         verbose_name_plural = 'Document Workflows'
         ordering = ['-started_at']
@@ -72,7 +72,7 @@ class DocumentWorkflow(models.Model):
             return None
         
         # Get next step in sequence
-        next_step = DocumentApproval.objects.filter(
+        next_step = DMSDocumentApproval.objects.filter(
             workflow=self,
             sequence__gt=self.current_step.sequence
         ).order_by('sequence').first()
@@ -80,7 +80,7 @@ class DocumentWorkflow(models.Model):
         return next_step
 
 
-class DocumentApproval(models.Model):
+class DMSDocumentApproval(models.Model):
     """Document approval step"""
     
     STATUS_CHOICES = [
@@ -91,7 +91,7 @@ class DocumentApproval(models.Model):
     ]
     
     workflow = models.ForeignKey(
-        DocumentWorkflow,
+        DMSDocumentWorkflow,
         on_delete=models.CASCADE,
         related_name='approval_steps'
     )
@@ -116,7 +116,7 @@ class DocumentApproval(models.Model):
     
     class Meta:
         app_label = 'fbs_dms'
-        db_table = 'fbs_dms_document_approval'
+        db_table = 'dms_document_approval'
         verbose_name = 'Document Approval'
         verbose_name_plural = 'Document Approvals'
         ordering = ['sequence']

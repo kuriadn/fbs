@@ -11,7 +11,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 import json
 
 
-class DocumentType(models.Model):
+class DMSDocumentType(models.Model):
     """Document type configuration"""
     
     name = models.CharField(max_length=100, unique=True)
@@ -34,7 +34,7 @@ class DocumentType(models.Model):
     
     class Meta:
         app_label = 'fbs_dms'
-        db_table = 'fbs_dms_document_type'
+        db_table = 'dms_document_type'
         verbose_name = 'Document Type'
         verbose_name_plural = 'Document Types'
         ordering = ['name']
@@ -54,7 +54,7 @@ class DocumentType(models.Model):
         return ext in self.get_allowed_extensions_list()
 
 
-class DocumentCategory(models.Model):
+class DMSDocumentCategory(models.Model):
     """Document category hierarchy"""
     
     name = models.CharField(max_length=100)
@@ -73,7 +73,7 @@ class DocumentCategory(models.Model):
     
     class Meta:
         app_label = 'fbs_dms'
-        db_table = 'fbs_dms_document_category'
+        db_table = 'dms_document_category'
         verbose_name = 'Document Category'
         verbose_name_plural = 'Document Categories'
         ordering = ['sequence', 'name']
@@ -85,7 +85,7 @@ class DocumentCategory(models.Model):
         return self.name
 
 
-class DocumentTag(models.Model):
+class DMSDocumentTag(models.Model):
     """Document tags for organization"""
     
     name = models.CharField(max_length=100, unique=True)
@@ -100,7 +100,7 @@ class DocumentTag(models.Model):
     
     class Meta:
         app_label = 'fbs_dms'
-        db_table = 'fbs_dms_document_tag'
+        db_table = 'dms_document_tag'
         verbose_name = 'Document Tag'
         verbose_name_plural = 'Document Tags'
         ordering = ['name']
@@ -109,7 +109,7 @@ class DocumentTag(models.Model):
         return self.name
 
 
-class Document(models.Model):
+class DMSDocument(models.Model):
     """Main document model"""
     
     STATE_CHOICES = [
@@ -129,22 +129,22 @@ class Document(models.Model):
     name = models.CharField(max_length=255, help_text='Document reference')
     title = models.CharField(max_length=255, help_text='Document title')
     document_type = models.ForeignKey(
-        DocumentType, 
+        DMSDocumentType, 
         on_delete=models.CASCADE,
         related_name='documents'
     )
     category = models.ForeignKey(
-        DocumentCategory, 
+        DMSDocumentCategory, 
         on_delete=models.CASCADE,
         related_name='documents'
     )
     tags = models.ManyToManyField(
-        DocumentTag, 
+        DMSDocumentTag, 
         blank=True,
         related_name='documents'
     )
     attachment = models.ForeignKey(
-        'FileAttachment',
+        'DMSFileAttachment',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -190,7 +190,7 @@ class Document(models.Model):
     
     class Meta:
         app_label = 'fbs_dms'
-        db_table = 'fbs_dms_document'
+        db_table = 'dms_document'
         verbose_name = 'Document'
         verbose_name_plural = 'Documents'
         ordering = ['-created_at']

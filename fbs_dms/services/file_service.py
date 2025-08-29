@@ -12,7 +12,7 @@ from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.contrib.auth.models import User
 
-from ..models import FileAttachment, DocumentType
+from ..models import DMSFileAttachment, DMSDocumentType
 
 logger = logging.getLogger('fbs_dms')
 
@@ -28,14 +28,14 @@ class FileService:
         file_obj: File, 
         user: User, 
         original_filename: str = None
-    ) -> FileAttachment:
+    ) -> DMSFileAttachment:
         """Upload a file and create attachment"""
         try:
             # Validate file
             self._validate_file(file_obj)
             
             # Create file attachment
-            attachment = FileAttachment.objects.create(
+            attachment = DMSFileAttachment.objects.create(
                 file=file_obj,
                 uploaded_by=user,
                 company_id=self.company_id
@@ -48,7 +48,7 @@ class FileService:
             logger.error(f"Failed to upload file: {str(e)}")
             raise
     
-    def download_file(self, file_id: int, user: User) -> Optional[FileAttachment]:
+    def download_file(self, file_id: int, user: User) -> Optional[DMSFileAttachment]:
         """Get file attachment for download"""
         try:
             attachment = self._get_file_attachment(file_id)
@@ -89,7 +89,7 @@ class FileService:
     def validate_file_for_document_type(
         self, 
         file_obj: File, 
-        document_type: DocumentType
+        document_type: DMSDocumentType
     ) -> Dict[str, Any]:
         """Validate file against document type requirements"""
         try:
@@ -150,11 +150,11 @@ class FileService:
     def _get_file_attachment(self, file_id: int) -> Optional[FileAttachment]:
         """Get file attachment by ID with company check"""
         try:
-            return FileAttachment.objects.get(
+            return DMSFileAttachment.objects.get(
                 id=file_id,
                 company_id=self.company_id
             )
-        except FileAttachment.DoesNotExist:
+        except DMSFileAttachment.DoesNotExist:
             return None
     
     def _validate_file(self, file_obj: File):

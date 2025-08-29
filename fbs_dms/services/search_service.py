@@ -13,7 +13,7 @@ from django.utils import timezone
 from django.db.models import Q, QuerySet
 from django.conf import settings
 
-from ..models import Document, DocumentType, DocumentCategory, DocumentTag, FileAttachment
+from ..models import DMSDocument, DMSDocumentType, DMSDocumentCategory, DMSDocumentTag, DMSFileAttachment
 
 logger = logging.getLogger('fbs_dms')
 
@@ -29,10 +29,10 @@ class SearchService:
         query: str, 
         filters: Dict[str, Any] = None,
         limit: int = 50
-    ) -> QuerySet[Document]:
+    ) -> QuerySet[DMSDocument]:
         """Full-text search with optional filters"""
         try:
-            queryset = Document.objects.filter(company_id=self.company_id)
+            queryset = DMSDocument.objects.filter(company_id=self.company_id)
             
             # Text search
             if query:
@@ -50,16 +50,16 @@ class SearchService:
             
         except Exception as e:
             logger.error(f"Full-text search failed: {str(e)}")
-            return Document.objects.none()
+            return DMSDocument.objects.none()
     
     def search_by_metadata(
         self, 
         metadata_filters: Dict[str, Any],
         limit: int = 50
-    ) -> QuerySet[Document]:
+    ) -> QuerySet[DMSDocument]:
         """Search documents by metadata"""
         try:
-            queryset = Document.objects.filter(company_id=self.company_id)
+            queryset = DMSDocument.objects.filter(company_id=self.company_id)
             
             for key, value in metadata_filters.items():
                 if key == 'tags':
@@ -82,16 +82,16 @@ class SearchService:
             
         except Exception as e:
             logger.error(f"Metadata search failed: {str(e)}")
-            return Document.objects.none()
+            return DMSDocument.objects.none()
     
     def search_by_workflow_status(
         self, 
         status_filters: Dict[str, Any],
         limit: int = 50
-    ) -> QuerySet[Document]:
+    ) -> QuerySet[DMSDocument]:
         """Search documents by workflow status"""
         try:
-            queryset = Document.objects.filter(company_id=self.company_id)
+            queryset = DMSDocument.objects.filter(company_id=self.company_id)
             
             if 'workflow_status' in status_filters:
                 workflow_status = status_filters['workflow_status']
@@ -126,16 +126,16 @@ class SearchService:
             
         except Exception as e:
             logger.error(f"Workflow status search failed: {str(e)}")
-            return Document.objects.none()
+            return DMSDocument.objects.none()
     
     def advanced_search(
         self, 
         search_params: Dict[str, Any],
         limit: int = 50
-    ) -> QuerySet[Document]:
+    ) -> QuerySet[DMSDocument]:
         """Advanced search combining multiple search types"""
         try:
-            queryset = Document.objects.filter(company_id=self.company_id)
+            queryset = DMSDocument.objects.filter(company_id=self.company_id)
             
             # Text search
             if 'query' in search_params:
@@ -170,7 +170,7 @@ class SearchService:
             
         except Exception as e:
             logger.error(f"Advanced search failed: {str(e)}")
-            return Document.objects.none()
+            return DMSDocument.objects.none()
     
     def get_search_suggestions(self, query: str, limit: int = 10) -> List[str]:
         """Get search suggestions based on query"""
@@ -178,21 +178,21 @@ class SearchService:
             suggestions = []
             
             # Document name suggestions
-            name_suggestions = Document.objects.filter(
+            name_suggestions = DMSDocument.objects.filter(
                 company_id=self.company_id,
                 name__icontains=query
             ).values_list('name', flat=True)[:limit//2]
             suggestions.extend(name_suggestions)
             
             # Document title suggestions
-            title_suggestions = Document.objects.filter(
+            title_suggestions = DMSDocument.objects.filter(
                 company_id=self.company_id,
                 title__icontains=query
             ).values_list('title', flat=True)[:limit//2]
             suggestions.extend(title_suggestions)
             
             # Tag suggestions
-            tag_suggestions = DocumentTag.objects.filter(
+            tag_suggestions = DMSDocumentTag.objects.filter(
                 documents__company_id=self.company_id,
                 name__icontains=query
             ).values_list('name', flat=True)[:limit//4]
@@ -210,24 +210,24 @@ class SearchService:
     def get_search_statistics(self) -> Dict[str, Any]:
         """Get search statistics for the company"""
         try:
-            total_documents = Document.objects.filter(company_id=self.company_id).count()
+            total_documents = DMSDocument.objects.filter(company_id=self.company_id).count()
             
             # Document type distribution
-            type_distribution = Document.objects.filter(
+            type_distribution = DMSDocument.objects.filter(
                 company_id=self.company_id
             ).values('document_type__name').annotate(
                 count=models.Count('id')
             )
             
             # State distribution
-            state_distribution = Document.objects.filter(
+            state_distribution = DMSDocument.objects.filter(
                 company_id=self.company_id
             ).values('state').annotate(
                 count=models.Count('id')
             )
             
             # Recent activity
-            recent_documents = Document.objects.filter(
+            recent_documents = DMSDocument.objects.filter(
                 company_id=self.company_id,
                 created_at__gte=timezone.now() - timedelta(days=30)
             ).count()

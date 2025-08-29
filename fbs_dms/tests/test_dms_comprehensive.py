@@ -41,7 +41,7 @@ class DMSComprehensiveTestCase(TestCase):
         self.company_id = 'test_company'
         
         # Create document type
-        self.doc_type = DocumentType.objects.create(
+        self.doc_type = DMSDocumentType.objects.create(
             name='Test Document',
             code='TEST_DOC',
             description='Test document type for comprehensive testing',
@@ -52,7 +52,7 @@ class DMSComprehensiveTestCase(TestCase):
         )
         
         # Create document category
-        self.category = DocumentCategory.objects.create(
+        self.category = DMSDocumentCategory.objects.create(
             name='Test Category',
             description='Test category for comprehensive testing',
             sequence=1,
@@ -60,7 +60,7 @@ class DMSComprehensiveTestCase(TestCase):
         )
         
         # Create document tag
-        self.tag = DocumentTag.objects.create(
+        self.tag = DMSDocumentTag.objects.create(
             name='Test Tag',
             description='Test tag for comprehensive testing',
             color=1,
@@ -447,7 +447,7 @@ class DMSComprehensiveTestCase(TestCase):
         self.assertEqual(updated_doc.name, doc_data['name'])  # Unchanged field
         
         # Verify database consistency
-        db_doc = Document.objects.get(id=original_id)
+        db_doc = DMSDocument.objects.get(id=original_id)
         self.assertEqual(db_doc.title, update_data['title'])
         self.assertEqual(db_doc.name, doc_data['name'])
     
@@ -483,15 +483,15 @@ class DMSComprehensiveTestCase(TestCase):
         """Clean up test data"""
         # Clean up any remaining test files
         try:
-            for attachment in FileAttachment.objects.all():
+            for attachment in DMSFileAttachment.objects.all():
                 if os.path.exists(attachment.file.path):
                     os.remove(attachment.file.path)
         except Exception:
             pass
         
         # Clean up test data
-        Document.objects.filter(company_id=self.company_id).delete()
-        DocumentType.objects.filter(name__startswith='Test').delete()
-        DocumentCategory.objects.filter(name__startswith='Test').delete()
-        DocumentTag.objects.filter(name__startswith='Test').delete()
+        DMSDocument.objects.filter(company_id=self.company_id).delete()
+        DMSDocumentType.objects.filter(name__startswith='Test').delete()
+        DMSDocumentCategory.objects.filter(name__startswith='Test').delete()
+        DMSDocumentTag.objects.filter(name__startswith='Test').delete()
         User.objects.filter(username='testuser').delete()

@@ -28,10 +28,6 @@ def django_db_setup(django_db_setup, django_db_blocker):
                 'ENGINE': 'django.db.backends.sqlite3',
                 'NAME': ':memory:',
             },
-            'licensing': {
-                'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': ':memory:',
-            },
             # Solution-specific test databases
             'djo_test_solution_db': {
                 'ENGINE': 'django.db.backends.sqlite3',

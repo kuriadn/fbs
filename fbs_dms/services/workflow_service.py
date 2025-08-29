@@ -13,7 +13,7 @@ from django.utils import timezone
 from django.db.models import Q, QuerySet
 from django.conf import settings
 
-from ..models import Document, DocumentWorkflow, DocumentApproval
+from ..models import DMSDocument, DMSDocumentWorkflow, DMSDocumentApproval
 
 logger = logging.getLogger('fbs_dms')
 
@@ -24,7 +24,7 @@ class WorkflowService:
     def __init__(self, company_id: str):
         self.company_id = company_id
     
-    def start_document_workflow(self, document: Document, user: User) -> DocumentWorkflow:
+    def start_document_workflow(self, document: DMSDocument, user: User) -> DMSDocumentWorkflow:
         """Start approval workflow for a document"""
         try:
             with transaction.atomic():
@@ -33,7 +33,7 @@ class WorkflowService:
                     raise ValidationError("Document already has a workflow")
                 
                 # Create workflow
-                workflow = DocumentWorkflow.objects.create(
+                workflow = DMSDocumentWorkflow.objects.create(
                     document=document,
                     status='active',
                     workflow_data={
@@ -58,7 +58,7 @@ class WorkflowService:
             logger.error(f"Failed to start workflow: {str(e)}")
             raise
     
-    def approve_step(self, approval_id: int, user: User, comments: str = '') -> DocumentApproval:
+    def approve_step(self, approval_id: int, user: User, comments: str = '') -> DMSDocumentApproval:
         """Approve a workflow step"""
         try:
             approval = self._get_approval(approval_id)
@@ -87,7 +87,7 @@ class WorkflowService:
             logger.error(f"Failed to approve step: {str(e)}")
             raise
     
-    def reject_step(self, approval_id: int, user: User, comments: str = '') -> DocumentApproval:
+    def reject_step(self, approval_id: int, user: User, comments: str = '') -> DMSDocumentApproval:
         """Reject a workflow step"""
         try:
             approval = self._get_approval(approval_id)
@@ -181,10 +181,10 @@ class WorkflowService:
             logger.error(f"Failed to get workflow status: {str(e)}")
             return None
     
-    def get_pending_approvals(self, user: User) -> QuerySet[DocumentApproval]:
+    def get_pending_approvals(self, user: User) -> QuerySet[DMSDocumentApproval]:
         """Get pending approvals for a user"""
         try:
-            return DocumentApproval.objects.filter(
+            return DMSDocumentApproval.objects.filter(
                 workflow__document__company_id=self.company_id,
                 approver=user,
                 status='pending'
@@ -192,7 +192,7 @@ class WorkflowService:
             
         except Exception as e:
             logger.error(f"Failed to get pending approvals: {str(e)}")
-            return DocumentApproval.objects.none()
+            return DMSDocumentApproval.objects.none()
     
     def cancel_workflow(self, document_id: int, user: User) -> bool:
         """Cancel a workflow"""
@@ -225,11 +225,11 @@ class WorkflowService:
             logger.error(f"Failed to cancel workflow: {str(e)}")
             raise
     
-    def _create_approval_steps(self, workflow: DocumentWorkflow, document: Document, user: User):
+    def _create_approval_steps(self, workflow: DMSDocumentWorkflow, document: DMSDocument, user: User):
         """Create approval steps for workflow"""
         # For now, create a simple single-step approval
         # In a real implementation, this could be configurable
-        DocumentApproval.objects.create(
+        DMSDocumentApproval.objects.create(
             workflow=workflow,
             approver=user,  # For now, creator is also approver
             sequence=1,
@@ -241,7 +241,7 @@ class WorkflowService:
         workflow.current_step = workflow.approval_steps.first()
         workflow.save()
     
-    def _is_workflow_complete(self, workflow: DocumentWorkflow) -> bool:
+    def _is_workflow_complete(self, workflow: DMSDocumentWorkflow) -> bool:
         """Check if workflow is complete"""
         # Check if all required steps are approved
         required_steps = workflow.approval_steps.filter(required=True)
@@ -249,31 +249,31 @@ class WorkflowService:
         
         return required_steps.count() == approved_steps.count()
     
-    def _complete_workflow(self, workflow: DocumentWorkflow, status: str):
+    def _complete_workflow(self, workflow: DMSDocumentWorkflow, status: str):
         """Mark workflow as complete"""
         workflow.complete_workflow(status)
     
-    def _get_document(self, document_id: int) -> Optional[Document]:
+    def _get_document(self, document_id: int) -> Optional[DMSDocument]:
         """Get document by ID with company check"""
         try:
-            return Document.objects.get(
+            return DMSDocument.objects.get(
                 id=document_id,
                 company_id=self.company_id
             )
-        except Document.DoesNotExist:
+        except DMSDocument.DoesNotExist:
             return None
     
-    def _get_approval(self, approval_id: int) -> Optional[DocumentApproval]:
+    def _get_approval(self, approval_id: int) -> Optional[DMSDocumentApproval]:
         """Get approval step by ID with company check"""
         try:
-            return DocumentApproval.objects.get(
+            return DMSDocumentApproval.objects.get(
                 id=approval_id,
                 workflow__document__company_id=self.company_id
             )
-        except DocumentApproval.DoesNotExist:
+        except DMSDocumentApproval.DoesNotExist:
             return None
     
-    def _can_approve_step(self, approval: DocumentApproval, user: User) -> bool:
+    def _can_approve_step(self, approval: DMSDocumentApproval, user: User) -> bool:
         """Check if user can approve step"""
         # Step approver can approve
         if approval.approver == user:
@@ -285,7 +285,7 @@ class WorkflowService:
         
         return False
     
-    def _can_reject_step(self, approval: DocumentApproval, user: User) -> bool:
+    def _can_reject_step(self, approval: DMSDocumentApproval, user: User) -> bool:
         """Check if user can reject step"""
         # Step approver can reject
         if approval.approver == user:
@@ -297,7 +297,7 @@ class WorkflowService:
         
         return False
     
-    def _can_cancel_workflow(self, workflow: DocumentWorkflow, user: User) -> bool:
+    def _can_cancel_workflow(self, workflow: DMSDocumentWorkflow, user: User) -> bool:
         """Check if user can cancel workflow"""
         # Document creator can cancel
         if workflow.document.created_by == user:

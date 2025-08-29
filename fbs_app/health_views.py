@@ -22,7 +22,7 @@ def health_check(request):
         'status': 'healthy',
         'timestamp': time.time(),
         'service': 'FBS App',
-        'version': '2.0.0'
+        'version': '2.0.4'
     })
 
 
@@ -34,7 +34,7 @@ def health_status(request):
         'status': 'healthy',
         'timestamp': time.time(),
         'service': 'FBS App',
-        'version': '2.0.0',
+        'version': '2.0.4',
         'components': {}
     }
     

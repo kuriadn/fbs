@@ -38,9 +38,9 @@ class FBSDatabaseRouter:
                 logger.debug(f"Routing to company database: {solution_db}")
                 return solution_db
         
-        # License manager models go to licensing database
+        # License manager models go to default database (embedded licensing)
         if app_label == 'fbs_license_manager':
-            return 'licensing'
+            return 'default'
         
         # FBS app models go to system database (default)
         if app_label == 'fbs_app':
@@ -84,9 +84,9 @@ class FBSDatabaseRouter:
                 logger.debug(f"Routing write to company database: {solution_db}")
                 return solution_db
         
-        # License manager models go to licensing database
+        # License manager models go to default database (embedded licensing)
         if app_label == 'fbs_license_manager':
-            return 'licensing'
+            return 'default'
         
         # FBS app models go to system database (default)
         if app_label == 'fbs_app':
@@ -129,8 +129,7 @@ class FBSDatabaseRouter:
             if (app1 == 'auth' and app2 == 'fbs_dms') or (app1 == 'fbs_dms' and app2 == 'auth'):
                 return True
             
-            # Allow relations between auth and fbs_license_manager (auth goes to default, license to licensing)
-            # This is a special case that might be needed for user authentication
+            # Allow relations between auth and fbs_license_manager (both go to default)
             if (app1 == 'auth' and app2 == 'fbs_license_manager') or (app1 == 'fbs_license_manager' and app2 == 'auth'):
                 return True
         

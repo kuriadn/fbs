@@ -15,7 +15,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 import json
 
-from ..models import Document, DocumentType, DocumentCategory, DocumentTag
+from ..models import DMSDocument, DMSDocumentType, DMSDocumentCategory, DMSDocumentTag
 from ..services.document_service import DocumentService
 from ..services.file_service import FileService
 
@@ -403,7 +403,7 @@ def _reject_document(request, document_id: int, company_id: str):
 def _get_document_types(request, company_id: str):
     """Get available document types"""
     try:
-        types = DocumentType.objects.filter(company_id=company_id).order_by('name')
+        types = DMSDocumentType.objects.filter(company_id=company_id).order_by('name')
         
         type_data = [{
             'id': doc_type.id,
@@ -430,7 +430,7 @@ def _get_document_types(request, company_id: str):
 def _get_document_categories(request, company_id: str):
     """Get available document categories"""
     try:
-        categories = DocumentCategory.objects.filter(company_id=company_id).order_by('name')
+        categories = DMSDocumentCategory.objects.filter(company_id=company_id).order_by('name')
         
         category_data = [{
             'id': category.id,

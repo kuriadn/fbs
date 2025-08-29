@@ -4,11 +4,11 @@ Admin interface for FBS License Manager
 
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import SolutionLicense, FeatureUsage, LicenseManager
+from .models import LICSolutionLicense, LICFeatureUsage, LICLicenseManager
 
 
-@admin.register(SolutionLicense)
-class SolutionLicenseAdmin(admin.ModelAdmin):
+@admin.register(LICSolutionLicense)
+class LICSolutionLicenseAdmin(admin.ModelAdmin):
     list_display = [
         'solution_name', 'license_type', 'status', 'source', 
         'created_at', 'updated_at'
@@ -66,8 +66,8 @@ class SolutionLicenseAdmin(admin.ModelAdmin):
     decrypted_license_key.short_description = 'Decrypted Key'
 
 
-@admin.register(FeatureUsage)
-class FeatureUsageAdmin(admin.ModelAdmin):
+@admin.register(LICFeatureUsage)
+class LICFeatureUsageAdmin(admin.ModelAdmin):
     list_display = [
         'solution_name', 'feature_name', 'usage_count', 
         'last_updated', 'usage_percentage'
@@ -81,7 +81,7 @@ class FeatureUsageAdmin(admin.ModelAdmin):
         """Display usage as percentage of limit"""
         try:
             # Get license for this solution
-            license_record = SolutionLicense.get_license_for_solution(obj.solution_name)
+            license_record = LICSolutionLicense.get_license_for_solution(obj.solution_name)
             if license_record:
                 limits = license_record.get_limits_dict()
                 limit = limits.get(obj.feature_name, -1)
@@ -119,8 +119,8 @@ class FeatureUsageAdmin(admin.ModelAdmin):
         return request.method == 'GET'
 
 
-@admin.register(LicenseManager)
-class LicenseManagerAdmin(admin.ModelAdmin):
+@admin.register(LICLicenseManager)
+class LICLicenseManagerAdmin(admin.ModelAdmin):
     list_display = ['id']
     readonly_fields = ['id']
     

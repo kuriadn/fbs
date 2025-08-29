@@ -10,13 +10,13 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 
 from .models import (
-    Document, DocumentType, DocumentCategory, DocumentTag,
-    FileAttachment, DocumentWorkflow, DocumentApproval
+    DMSDocument, DMSDocumentType, DMSDocumentCategory, DMSDocumentTag,
+    DMSFileAttachment, DMSDocumentWorkflow, DMSDocumentApproval
 )
 
 
-@admin.register(DocumentType)
-class DocumentTypeAdmin(admin.ModelAdmin):
+@admin.register(DMSDocumentType)
+class DMSDocumentTypeAdmin(admin.ModelAdmin):
     list_display = ['name', 'code', 'requires_approval', 'max_file_size', 'is_active', 'created_at']
     list_filter = ['requires_approval', 'is_active', 'created_at']
     search_fields = ['name', 'code']
@@ -39,8 +39,8 @@ class DocumentTypeAdmin(admin.ModelAdmin):
     )
 
 
-@admin.register(DocumentCategory)
-class DocumentCategoryAdmin(admin.ModelAdmin):
+@admin.register(DMSDocumentCategory)
+class DMSDocumentCategoryAdmin(admin.ModelAdmin):
     list_display = ['name', 'parent', 'sequence', 'is_active', 'created_at']
     list_filter = ['is_active', 'parent', 'created_at']
     search_fields = ['name']
@@ -56,8 +56,8 @@ class DocumentCategoryAdmin(admin.ModelAdmin):
     )
 
 
-@admin.register(DocumentTag)
-class DocumentTagAdmin(admin.ModelAdmin):
+@admin.register(DMSDocumentTag)
+class DMSDocumentTagAdmin(admin.ModelAdmin):
     list_display = ['name', 'color', 'is_active', 'created_at']
     list_filter = ['is_active', 'color', 'created_at']
     search_fields = ['name']
@@ -79,8 +79,8 @@ class DocumentTagAdmin(admin.ModelAdmin):
     colored_name.short_description = 'Tag Name'
 
 
-@admin.register(FileAttachment)
-class FileAttachmentAdmin(admin.ModelAdmin):
+@admin.register(DMSFileAttachment)
+class DMSFileAttachmentAdmin(admin.ModelAdmin):
     list_display = [
         'original_filename', 'file_size_mb', 'mime_type', 
         'uploaded_by', 'company_id', 'created_at'
@@ -114,8 +114,8 @@ class FileAttachmentAdmin(admin.ModelAdmin):
     )
 
 
-@admin.register(Document)
-class DocumentAdmin(admin.ModelAdmin):
+@admin.register(DMSDocument)
+class DMSDocumentAdmin(admin.ModelAdmin):
     list_display = [
         'name', 'title', 'document_type', 'category', 'state', 
         'created_by', 'company_id', 'created_at'
@@ -160,8 +160,8 @@ class DocumentAdmin(admin.ModelAdmin):
         return qs
 
 
-@admin.register(DocumentWorkflow)
-class DocumentWorkflowAdmin(admin.ModelAdmin):
+@admin.register(DMSDocumentWorkflow)
+class DMSDocumentWorkflowAdmin(admin.ModelAdmin):
     list_display = [
         'document_name', 'status', 'current_step', 'started_at', 'completed_at'
     ]
@@ -189,8 +189,8 @@ class DocumentWorkflowAdmin(admin.ModelAdmin):
     )
 
 
-@admin.register(DocumentApproval)
-class DocumentApprovalAdmin(admin.ModelAdmin):
+@admin.register(DMSDocumentApproval)
+class DMSDocumentApprovalAdmin(admin.ModelAdmin):
     list_display = [
         'workflow_document', 'sequence', 'approver', 'status', 
         'required', 'created_at'

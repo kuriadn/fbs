@@ -35,8 +35,8 @@ class EmbeddedLicenseEngine:
         """Load license data from multiple sources"""
         try:
             # Priority 1: Database storage
-            from .models import SolutionLicense
-            db_license = SolutionLicense.get_license_for_solution(self.solution_name)
+            from .models import LICSolutionLicense
+            db_license = LICSolutionLicense.get_license_for_solution(self.solution_name)
             if db_license:
                 self._license_data = {
                     'type': db_license.license_type,
@@ -360,8 +360,8 @@ class FeatureFlags:
         current_usage = kwargs.get('current_usage', 0)
         if current_usage == 0:
             try:
-                from .models import FeatureUsage
-                current_usage = FeatureUsage.get_current_usage(self.solution_name, feature_name)
+                from .models import LICFeatureUsage
+                current_usage = LICFeatureUsage.get_current_usage(self.solution_name, feature_name)
             except Exception as e:
                 logger.warning(f"Failed to get usage from database for {feature_name}: {e}")
         
@@ -405,8 +405,8 @@ class FeatureFlags:
     def get_feature_usage_summary(self) -> Dict[str, int]:
         """Get current usage for all features"""
         try:
-            from .models import FeatureUsage
-            usage_records = FeatureUsage.objects.filter(solution_name=self.solution_name)
+            from .models import LICFeatureUsage
+            usage_records = LICFeatureUsage.objects.filter(solution_name=self.solution_name)
             return {
                 record.feature_name: record.usage_count 
                 for record in usage_records
@@ -627,19 +627,19 @@ class LicenseManager:
     def _get_license_info(self) -> Dict[str, Any]:
         """Get license information for the solution"""
         try:
-            # Import SolutionLicense here to avoid circular imports
-            from .models import SolutionLicense
+            # Import LICSolutionLicense here to avoid circular imports
+            from .models import LICSolutionLicense
             
             # Try to get from solution-specific database first
             if self.solution_db and self.solution_db in self._get_solution_databases():
-                db_license = SolutionLicense.objects.using(self.solution_db).filter(
+                db_license = LICSolutionLicense.objects.using(self.solution_db).filter(
                     solution_name=self.solution_name
                 ).first()
                 if db_license:
                     return self._format_license_info(db_license)
             
             # Fall back to system database
-            db_license = SolutionLicense.objects.filter(
+            db_license = LICSolutionLicense.objects.filter(
                 solution_name=self.solution_name
             ).first()
             

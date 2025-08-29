@@ -4,13 +4,24 @@ FBS Version Information
 This module provides version information for the FBS application.
 """
 
-__version__ = '2.0.3'
-__version_info__ = (2, 0, 3)
-__release_date__ = '2025-08-28'
+__version__ = '2.0.4'
+__version_info__ = (2, 0, 4)
+__release_date__ = '2025-08-29'
 __release_type__ = 'Major Update & Bug Fixes'
 
 # Version history
 VERSION_HISTORY = {
+    '2.0.4': {
+        'date': '2025-08-29',
+        'type': 'Major Update & Bug Fixes',
+        'changes': [
+            'Consistent model naming convention implemented',
+            'DMS models prefixed with DMS_',
+            'License models prefixed with LIC_',
+            'Simplified database architecture',
+            'All services updated for consistency'
+        ]
+    },
     '2.0.3': {
         'date': '2025-08-28',
         'type': 'Major Update & Bug Fixes',

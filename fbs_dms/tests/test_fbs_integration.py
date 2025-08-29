@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 from unittest.mock import patch, MagicMock
 from django.core.exceptions import ValidationError
 
-from fbs_dms.models import DocumentType, DocumentCategory, Document
+from fbs_dms.models import DMSDocumentType, DMSDocumentCategory, DMSDocument
 from fbs_dms.services.document_service import DocumentService
 
 
@@ -23,14 +23,14 @@ class FBSIntegrationTestCase(TestCase):
             password='testpass123'
         )
         
-        self.doc_type = DocumentType.objects.create(
+        self.doc_type = DMSDocumentType.objects.create(
             name='Invoice',
             code='INV',
             requires_approval=False,
             max_file_size=10
         )
         
-        self.category = DocumentCategory.objects.create(
+        self.category = DMSDocumentCategory.objects.create(
             name='Financial',
             sequence=1
         )

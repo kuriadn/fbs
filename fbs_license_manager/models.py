@@ -17,7 +17,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 logger = logging.getLogger('fbs_license_manager')
 
 
-class SolutionLicense(models.Model):
+class LICSolutionLicense(models.Model):
     """Solution License Information stored in database"""
     
     solution_name = models.CharField(
@@ -97,7 +97,7 @@ class SolutionLicense(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        db_table = 'fbs_license_manager_solution_license'
+        db_table = 'lic_solution_license'
         verbose_name = 'Solution License'
         verbose_name_plural = 'Solution Licenses'
         ordering = ['solution_name']
@@ -300,7 +300,7 @@ class SolutionLicense(models.Model):
             return cls.objects.create(**model_data)
 
 
-class FeatureUsage(models.Model):
+class LICFeatureUsage(models.Model):
     """Feature usage tracking for solutions"""
     
     solution_name = models.CharField(
@@ -323,7 +323,7 @@ class FeatureUsage(models.Model):
     last_updated = models.DateTimeField(auto_now=True)
     
     class Meta:
-        db_table = 'fbs_license_manager_feature_usage'
+        db_table = 'lic_feature_usage'
         verbose_name = 'Feature Usage'
         verbose_name_plural = 'Feature Usage'
         ordering = ['solution_name', 'feature_name']
@@ -362,11 +362,11 @@ class FeatureUsage(models.Model):
         return usage.usage_count if usage else 0
 
 
-class LicenseManager(models.Model):
+class LICLicenseManager(models.Model):
     """License management operations utility model"""
     
     class Meta:
-        db_table = 'fbs_license_manager_manager'
+        db_table = 'lic_license_manager'
         verbose_name = 'License Manager'
         verbose_name_plural = 'License Managers'
     
@@ -380,7 +380,7 @@ class LicenseManager(models.Model):
             from django.core.exceptions import ValidationError
             raise ValidationError("Solution name is required")
         
-        return SolutionLicense.get_license_for_solution(solution_name)
+        return LICSolutionLicense.get_license_for_solution(solution_name)
     
     @classmethod
     def check_feature_access(cls, solution_name, feature_name, current_usage=0):
@@ -424,12 +424,12 @@ class LicenseManager(models.Model):
     @classmethod
     def increment_feature_usage(cls, solution_name, feature_name, count=1):
         """Increment usage counter for a feature"""
-        FeatureUsage.increment_usage(solution_name, feature_name, count)
+        LICFeatureUsage.increment_usage(solution_name, feature_name, count)
     
     @classmethod
     def get_feature_usage(cls, solution_name, feature_name):
         """Get current usage for a feature"""
-        return FeatureUsage.get_current_usage(solution_name, feature_name)
+        return LICFeatureUsage.get_current_usage(solution_name, feature_name)
     
     @classmethod
     def validate_license(cls, solution_name):

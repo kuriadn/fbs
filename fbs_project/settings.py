@@ -75,14 +75,6 @@ DATABASES = {
         'PASSWORD': os.environ.get('DB_PASSWORD', 'four@One2'),
         'HOST': os.environ.get('DB_HOST', 'localhost'),
         'PORT': os.environ.get('DB_PORT', '5432'),
-    },
-    'licensing': {
-        'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.postgresql'),
-        'NAME': os.environ.get('LIC_DB_NAME', 'lic_system_db'),
-        'USER': os.environ.get('DB_USER', 'odoo'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'four@One2'),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
     }
     # Solution-specific databases (djo_{solution}_db, fbs_{solution}_db)
     # are created by the solution implementation and added to settings
@@ -266,10 +258,6 @@ if 'test' in sys.argv or 'pytest' in sys.argv:
     # Test-specific settings
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': ':memory:',
-        },
-        'licensing': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': ':memory:',
         }

@@ -35,6 +35,6 @@ except ImportError:
         'OdooLicenseService'
     ]
 
-__version__ = '2.0.0'
+__version__ = '2.0.4'
 __author__ = 'FBS Team'
 __description__ = 'Enterprise-grade licensing system for Django applications'
