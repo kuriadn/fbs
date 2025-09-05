@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.5] - 2025-01-15
+
+### Fixed
+- **CRITICAL:** Fixed DMS views assuming `request.user.company_id` exists (prevents AttributeError)
+- Fixed AuthService constructor to accept optional solution_name parameter
+- Fixed undefined variable reference in auth service logging
+- Standardized logging across all services to use consistent 'fbs_app' logger
+
+### Changed  
+- Improved error handling with safe attribute access in DMS views
+- Enhanced system reliability across all three modules (fbs_app, fbs_dms, fbs_license_manager)
+
+### Verified
+- Comprehensive multi-module system verification completed
+- All cross-module dependencies confirmed safe (no circular imports)
+- All model relationships validated with proper on_delete parameters
+- All method signatures verified to match implementations
+- Complete production readiness confirmed across entire FBS suite
+
+## [2.0.4] - Previous Release
+
 ### Added
 - Comprehensive documentation alignment with current implementation
 - Modern Python packaging with pyproject.toml

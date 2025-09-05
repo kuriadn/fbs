@@ -20,7 +20,7 @@ class MSMEService:
         self.solution_name = solution_name
         self.fbs_config = getattr(settings, 'FBS_APP', {})
     
-    def setup_msme_business(self, business_type: str, request=None) -> Dict[str, Any]:
+    def setup_msme_business(self, business_type: str, config: Dict[str, Any] = None, request=None) -> Dict[str, Any]:
         """Setup MSME business with pre-configured data"""
         try:
             from ..models import MSMESetupWizard
@@ -32,8 +32,12 @@ class MSMEService:
                 status='in_progress'
             )
             
-            # Get pre-configured data
+            # Get pre-configured data and merge with user config
             preconfigured_data = self._get_preconfigured_data(business_type)
+            if config:
+                # Merge user config with preconfigured data
+                preconfigured_data.update(config)
+            
             wizard.preconfigured_data = preconfigured_data
             wizard.save()
             

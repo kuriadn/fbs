@@ -43,6 +43,7 @@ from .workflows import (
     WorkflowInstance,
     WorkflowStep,
     WorkflowTransition,
+    WorkflowExecutionLog,
 )
 
 # Business Intelligence models
@@ -103,6 +104,7 @@ __all__ = [
     'WorkflowInstance',
     'WorkflowStep',
     'WorkflowTransition',
+    'WorkflowExecutionLog',
     
     # BI
     'Dashboard',

@@ -72,45 +72,6 @@ class DiscoveryService:
                 'message': 'Failed to discover models'
             }
     
-    def discover_model_fields(self, model_name: str, database_name: str = None) -> Dict[str, Any]:
-        """Discover fields for a specific model"""
-        try:
-            db_name = database_name or self.database_name
-            if not db_name:
-                return {
-                    'success': False,
-                    'error': 'Database name not specified',
-                    'message': 'Please provide a database name'
-                }
-            
-            # Get field definitions
-            result = self.odoo_client.get_model_fields(model_name, db_name)
-            
-            if not result['success']:
-                return result
-            
-            fields = result['data']
-            
-            # Process field information
-            processed_fields = self._process_field_info(fields)
-            
-            return {
-                'success': True,
-                'data': {
-                    'model_name': model_name,
-                    'fields': processed_fields,
-                    'field_count': len(processed_fields)
-                },
-                'message': f'Discovered {len(processed_fields)} fields for {model_name}'
-            }
-            
-        except Exception as e:
-            logger.error(f"Error discovering model fields: {str(e)}")
-            return {
-                'success': False,
-                'error': str(e),
-                'message': 'Failed to discover model fields'
-            }
     
     def discover_modules(self, database_name: str = None) -> Dict[str, Any]:
         """Discover installed modules in an Odoo database"""

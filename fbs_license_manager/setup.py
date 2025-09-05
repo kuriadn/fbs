@@ -9,7 +9,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="fbs-license-manager",
-    version="2.0.4",
+    version="2.0.5",
     author="FBS Team",
     author_email="team@fbs.com",
     description="Enterprise-grade licensing system for Django applications",
@@ -40,7 +40,6 @@ setup(
     install_requires=[
         "Django>=3.2,<5.0",
         "cryptography>=3.4.8",
-        "fbs-app>=1.0.0",
     ],
     extras_require={
         "dev": [

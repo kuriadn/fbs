@@ -24,7 +24,7 @@ from ..models.accounting import (
 )
 from ..models.msme import MSMEAnalytics
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('fbs_app')
 
 
 class MSMEAccountingService:

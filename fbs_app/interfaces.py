@@ -408,9 +408,17 @@ class OdooIntegrationInterface:
         return self._odoo_client.delete_record(model_name, record_id, '', db_name)
     
     def execute_method(self, model_name: str, method_name: str, record_ids: List[int], 
-                      parameters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+                      parameters: Optional[Dict[str, Any]] = None, database_name: Optional[str] = None) -> Dict[str, Any]:
         """Execute method on Odoo records"""
-        return self._odoo_client.execute_method(model_name, method_name, record_ids, parameters)
+        db_name = database_name or f"fbs_{self.solution_name}_db"
+        return self._odoo_client.execute_method(
+            model_name=model_name, 
+            method_name=method_name, 
+            record_ids=record_ids,
+            args=[],
+            kwargs=parameters or {},
+            database=db_name
+        )
     
     def get_database_info(self) -> Dict[str, Any]:
         """Get Odoo database information"""
@@ -420,7 +428,7 @@ class OdooIntegrationInterface:
         """Create required FBS database tables"""
         from .services.database_service import DatabaseService
         db_service = DatabaseService(self.solution_name)
-        return db_service.create_fbs_tables(database_name)
+        return db_service.create_fbs_tables(database_name=database_name, solution_name=self.solution_name)
     
     def create_solution_databases(self) -> Dict[str, Any]:
         """Create both Django and Odoo databases for the solution"""

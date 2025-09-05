@@ -22,7 +22,7 @@ from .msme_compliance_service import MSMEComplianceService
 from .msme_workflow_service import MSMEWorkflowService
 from .msme_accounting_service import MSMEAccountingService
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('fbs_app')
 
 
 class MSMEServiceManager:

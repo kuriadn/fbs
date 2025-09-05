@@ -269,9 +269,10 @@ class FBSServiceGenerator:
                     # Execute method in Odoo
                     result = odoo_client.execute_method(
                         model_name=self.model_name,
-                        record_id=int(record_id),
                         method_name=method_name,
-                        params=params,
+                        record_ids=[int(record_id)],
+                        args=[],
+                        kwargs=params,
                         token=self.token,
                         database=self.database_name
                     )

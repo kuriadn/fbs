@@ -149,3 +149,37 @@ class WorkflowTransition(models.Model):
     
     def __str__(self):
         return f"{self.from_step.name} → {self.to_step.name}"
+
+
+class WorkflowExecutionLog(models.Model):
+    """Model to store workflow execution history and audit trail"""
+    
+    ACTION_TYPES = [
+        ('workflow_started', 'Workflow Started'),
+        ('step_completed', 'Step Completed'),
+        ('step_failed', 'Step Failed'),
+        ('transition_executed', 'Transition Executed'),
+        ('workflow_completed', 'Workflow Completed'),
+        ('workflow_cancelled', 'Workflow Cancelled'),
+        ('workflow_paused', 'Workflow Paused'),
+        ('workflow_resumed', 'Workflow Resumed'),
+    ]
+    
+    workflow_instance = models.ForeignKey(WorkflowInstance, on_delete=models.CASCADE, related_name='execution_logs')
+    action = models.CharField(max_length=50, choices=ACTION_TYPES)
+    action_data = models.JSONField(default=dict)  # Additional action data
+    timestamp = models.DateTimeField(auto_now_add=True)
+    executed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    notes = models.TextField(blank=True)
+    
+    class Meta:
+        app_label = 'fbs_app'
+        db_table = 'fbs_workflow_execution_logs'
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['workflow_instance', '-timestamp']),
+            models.Index(fields=['action', '-timestamp']),
+        ]
+    
+    def __str__(self):
+        return f"{self.workflow_instance} - {self.action} at {self.timestamp}"

@@ -15,7 +15,7 @@ from urllib3.util.retry import Retry
 import time
 import xmlrpc.client
 
-logger = logging.getLogger('odoo_client')
+logger = logging.getLogger('fbs_app')
 
 
 class OdooClientError(Exception):
@@ -73,8 +73,8 @@ class OdooClient:
         
         # Get credentials from environment variables (priority) or FBS settings
         # For Odoo operations, use admin user; for database operations, use odoo user
-        username = os.environ.get('ODOO_USER', 'admin') or getattr(settings, 'FBS_APP', {}).get('ODOO_USER', 'admin')
-        password = os.environ.get('ODOO_PASSWORD', 'MeMiMo@0207') or getattr(settings, 'FBS_APP', {}).get('ODOO_PASSWORD', 'MeMiMo@0207')
+        username = os.environ.get('ODOO_USER') or getattr(settings, 'FBS_APP', {}).get('ODOO_USER')
+        password = os.environ.get('ODOO_PASSWORD') or getattr(settings, 'FBS_APP', {}).get('ODOO_PASSWORD')
         
         if not username or not password:
             raise OdooClientError(

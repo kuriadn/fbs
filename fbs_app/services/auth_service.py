@@ -17,8 +17,8 @@ logger = logging.getLogger('fbs_app')
 class AuthService:
     """Service for managing authentication and handshakes"""
     
-    def __init__(self, solution_name: str):
-        self.solution_name = solution_name
+    def __init__(self, solution_name: str = None):
+        self.solution_name = solution_name or 'default'
         self.fbs_config = getattr(settings, 'FBS_APP', {})
         self.handshake_expiry_hours = self.fbs_config.get('HANDSHAKE_EXPIRY_HOURS', 24)
     
@@ -45,7 +45,7 @@ class AuthService:
                 expires_at=expires_at
             )
             
-            logger.info(f"Created handshake for {solution_name}")
+            logger.info(f"Created handshake for {self.solution_name}")
             
             return {
                 'success': True,

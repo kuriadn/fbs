@@ -16,7 +16,7 @@ import json
 # Lazy imports to avoid Django configuration issues
 # Models will be imported only when methods are called
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('fbs_app')
 
 
 class MSMEBusinessService:

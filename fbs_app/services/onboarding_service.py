@@ -21,50 +21,6 @@ class OnboardingService:
         self.solution_name = solution_name
         self.fbs_config = getattr(settings, 'FBS_APP', {})
     
-    def start_onboarding(self, business_type: str, business_name: str, 
-                        contact_email: str, contact_phone: str = None) -> Dict[str, Any]:
-        """Start client onboarding process"""
-        try:
-            # Generate unique onboarding ID
-            onboarding_id = str(uuid.uuid4())
-            
-            # Create solution name from business name
-            solution_name = self._generate_solution_name(business_name)
-            
-            # Create onboarding wizard record
-            from ..models import MSMESetupWizard
-            wizard = MSMESetupWizard.objects.create(
-                solution_name=self.solution_name,
-                business_type=business_type,
-                setup_status='pending',
-                preconfigured_data={
-                    'business_name': business_name,
-                    'contact_email': contact_email,
-                    'contact_phone': contact_phone,
-                    'onboarding_id': onboarding_id,
-                    'created_at': timezone.now().isoformat()
-                }
-            )
-            
-            # Get available templates for business type
-            templates = self.get_available_templates(business_type)
-            
-            return {
-                'success': True,
-                'onboarding_id': onboarding_id,
-                'solution_name': solution_name,
-                'business_type': business_type,
-                'available_templates': templates,
-                'next_steps': [
-                    'configure_business_setup',
-                    'select_modules',
-                    'complete_onboarding'
-                ]
-            }
-            
-        except Exception as e:
-            logger.error(f"Error starting onboarding: {str(e)}")
-            return {'success': False, 'error': str(e)}
     
     def get_available_templates(self, business_type: str = None) -> Dict[str, Any]:
         """Get available onboarding templates"""
@@ -198,16 +154,20 @@ class OnboardingService:
             logger.error(f"Error selecting modules: {str(e)}")
             return {'success': False, 'error': str(e)}
     
-    def complete_onboarding(self, onboarding_id: str) -> Dict[str, Any]:
+    def complete_onboarding(self, client_id) -> Dict[str, Any]:
         """Complete the onboarding process"""
         try:
             from ..models import MSMESetupWizard
             
-            # Get onboarding wizard
+            # Get onboarding wizard - support both numeric ID and UUID string
             try:
-                wizard = MSMESetupWizard.objects.get(
-                    preconfigured_data__onboarding_id=onboarding_id
-                )
+                if isinstance(client_id, int):
+                    wizard = MSMESetupWizard.objects.get(id=client_id)
+                else:
+                    # Support legacy UUID-based lookup
+                    wizard = MSMESetupWizard.objects.get(
+                        preconfigured_data__onboarding_id=client_id
+                    )
             except MSMESetupWizard.DoesNotExist:
                 return {'success': False, 'error': 'Onboarding session not found'}
             
@@ -228,22 +188,26 @@ class OnboardingService:
             logger.error(f"Error completing onboarding: {str(e)}")
             return {'success': False, 'error': str(e)}
     
-    def get_onboarding_status(self, onboarding_id: str) -> Dict[str, Any]:
+    def get_onboarding_status(self, client_id) -> Dict[str, Any]:
         """Get current onboarding status"""
         try:
             from ..models import MSMESetupWizard
             
-            # Get onboarding wizard
+            # Get onboarding wizard - support both numeric ID and UUID string
             try:
-                wizard = MSMESetupWizard.objects.get(
-                    preconfigured_data__onboarding_id=onboarding_id
-                )
+                if isinstance(client_id, int):
+                    wizard = MSMESetupWizard.objects.get(id=client_id)
+                else:
+                    # Support legacy UUID-based lookup
+                    wizard = MSMESetupWizard.objects.get(
+                        preconfigured_data__onboarding_id=client_id
+                    )
             except MSMESetupWizard.DoesNotExist:
                 return {'success': False, 'error': 'Onboarding session not found'}
             
             return {
                 'success': True,
-                'onboarding_id': onboarding_id,
+                'onboarding_id': client_id,
                 'solution_name': wizard.solution_name,
                 'business_type': wizard.business_type,
                 'setup_status': wizard.setup_status,
@@ -280,7 +244,7 @@ class OnboardingService:
         except Exception:
             return False
     
-    # Missing methods that the interface expects
+    # Interface compatibility methods
     def start_onboarding(self, client_data: Dict[str, Any]) -> Dict[str, Any]:
         """Start client onboarding process"""
         try:
@@ -289,27 +253,32 @@ class OnboardingService:
             # Extract client data
             business_name = client_data.get('business_name', 'New Business')
             business_type = client_data.get('business_type', 'general')
+            contact_email = client_data.get('contact_email', '')
+            contact_phone = client_data.get('contact_phone', '')
             
             # Generate unique solution name
             solution_name = self._generate_solution_name(business_name)
             
-            # Create onboarding wizard
+            # Create onboarding wizard with unified approach
             wizard = MSMESetupWizard.objects.create(
                 solution_name=solution_name,
                 business_type=business_type,
-                status='not_started',
-                current_step='setup',
-                total_steps=5,
-                progress=0.0
+                setup_status='pending',
+                preconfigured_data={
+                    'business_name': business_name,
+                    'contact_email': contact_email,
+                    'contact_phone': contact_phone,
+                    'created_at': timezone.now().isoformat()
+                }
             )
             
             return {
                 'success': True,
                 'data': {
-                    'onboarding_id': wizard.id,
+                    'onboarding_id': wizard.id,  # Return numeric ID for interface compatibility
                     'solution_name': wizard.solution_name,
                     'business_type': wizard.business_type,
-                    'status': wizard.status
+                    'status': wizard.setup_status
                 }
             }
         except Exception as e:

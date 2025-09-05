@@ -623,11 +623,12 @@ class DatabaseService:
                 'error': str(e)
             }
 
-    def create_fbs_tables(self, solution_name: str = None) -> Dict[str, Any]:
+    def create_fbs_tables(self, database_name: str = None, solution_name: str = None) -> Dict[str, Any]:
         """
         Create required FBS database tables for the solution
         
         Args:
+            database_name: Name of the database (optional, auto-generated if not provided)
             solution_name: Name of the solution (optional, uses self.solution_name if not provided)
             
         Returns:
@@ -635,24 +636,30 @@ class DatabaseService:
         """
         try:
             sol_name = solution_name or self.solution_name
-            if not sol_name:
+            if not sol_name and not database_name:
                 return {
                     'success': False,
-                    'error': 'Solution name not specified',
-                    'message': 'Please provide a solution name'
+                    'error': 'Solution name or database name must be specified',
+                    'message': 'Please provide a solution name or database name'
                 }
             
-            # Get database configuration
-            db_config = self.get_database_config('fbs', sol_name)
-            database_name = db_config['database_name']
+            # Get database configuration - use correct field names
+            if database_name:
+                # Use provided database name
+                db_name = database_name
+            else:
+                # Generate database name from solution
+                db_name = f"fbs_{sol_name}_db"
             
-            # Connect to the FBS database
+            db_config = self.get_database_config('fbs', sol_name)
+            
+            # Connect to the FBS database using correct config keys
             conn = psycopg2.connect(
-                host=db_config['host'],
-                port=db_config['port'],
-                user=db_config['user'],
-                password=db_config['password'],
-                database=database_name
+                host=db_config['HOST'],
+                port=db_config['PORT'],
+                user=db_config['USER'],
+                password=db_config['PASSWORD'],
+                database=db_name
             )
             
             cursor = conn.cursor()
@@ -722,9 +729,9 @@ class DatabaseService:
             
             return {
                 'success': True,
-                'database_name': database_name,
+                'database_name': db_name,
                 'tables_created': ['fbs_msme_analytics', 'fbs_reports', 'fbs_compliance_rules'],
-                'message': f'FBS tables created successfully in {database_name}'
+                'message': f'FBS tables created successfully in {db_name}'
             }
             
         except Exception as e:
@@ -932,11 +939,12 @@ class DatabaseService:
     def _create_odoo_tables(self, database_name: str) -> Dict[str, Any]:
         """Create Odoo-specific tables in the database"""
         try:
-            # This would create Odoo-specific tables
-            # For now, return a placeholder
+            # Note: Odoo creates its own tables during database initialization
+            # This method is kept for compatibility but Odoo handles table creation
+            logger.info(f"Odoo tables are created automatically during database initialization for {database_name}")
             return {
-                'status': 'placeholder',
-                'message': 'Odoo table creation not yet implemented',
+                'status': 'skipped',
+                'message': 'Odoo tables are created automatically during database initialization',
                 'database': database_name
             }
         except Exception as e:

@@ -24,7 +24,7 @@ logger = logging.getLogger('fbs_dms')
 def workflow_start(request, document_id):
     """Start a workflow for a document"""
     try:
-        company_id = request.GET.get('company_id') or request.user.company_id
+        company_id = request.GET.get('company_id') or getattr(request.user, 'company_id', 'default')
         
         # Initialize service
         service = WorkflowService(company_id)
@@ -71,7 +71,7 @@ def workflow_start(request, document_id):
 def workflow_approve(request, approval_id):
     """Approve a workflow step"""
     try:
-        company_id = request.GET.get('company_id') or request.user.company_id
+        company_id = request.GET.get('company_id') or getattr(request.user, 'company_id', 'default')
         
         # Parse request data
         data = json.loads(request.body) if request.body else {}
@@ -112,7 +112,7 @@ def workflow_approve(request, approval_id):
 def workflow_reject(request, approval_id):
     """Reject a workflow step"""
     try:
-        company_id = request.GET.get('company_id') or request.user.company_id
+        company_id = request.GET.get('company_id') or getattr(request.user, 'company_id', 'default')
         
         # Parse request data
         data = json.loads(request.body) if request.body else {}
@@ -153,7 +153,7 @@ def workflow_reject(request, approval_id):
 def workflow_skip(request, approval_id):
     """Skip a workflow step"""
     try:
-        company_id = request.GET.get('company_id') or request.user.company_id
+        company_id = request.GET.get('company_id') or getattr(request.user, 'company_id', 'default')
         
         # Parse request data
         data = json.loads(request.body) if request.body else {}
@@ -194,7 +194,7 @@ def workflow_skip(request, approval_id):
 def workflow_status(request, document_id):
     """Get workflow status for a document"""
     try:
-        company_id = request.GET.get('company_id') or request.user.company_id
+        company_id = request.GET.get('company_id') or getattr(request.user, 'company_id', 'default')
         
         # Initialize service
         service = WorkflowService(company_id)
@@ -227,7 +227,7 @@ def workflow_status(request, document_id):
 def pending_approvals(request):
     """Get pending approvals for the current user"""
     try:
-        company_id = request.GET.get('company_id') or request.user.company_id
+        company_id = request.GET.get('company_id') or getattr(request.user, 'company_id', 'default')
         
         # Initialize service
         service = WorkflowService(company_id)
@@ -267,7 +267,7 @@ def pending_approvals(request):
 def workflow_cancel(request, document_id):
     """Cancel a workflow"""
     try:
-        company_id = request.GET.get('company_id') or request.user.company_id
+        company_id = request.GET.get('company_id') or getattr(request.user, 'company_id', 'default')
         
         # Initialize service
         service = WorkflowService(company_id)

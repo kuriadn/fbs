@@ -24,7 +24,7 @@ from ..models.workflows import (
 )
 from ..models.core import ApprovalRequest, ApprovalResponse
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('fbs_app')
 
 
 class MSMEWorkflowService:
@@ -121,40 +121,38 @@ class MSMEWorkflowService:
                 
                 # Create workflow instance
                 instance = WorkflowInstance.objects.create(
-                    instance_id=str(uuid.uuid4()),
-                    workflow=workflow,
+                    workflow_definition=workflow,
+                    business_id=instance_data.get('business_id', 'default'),
                     status='active',
-                    current_step='start',
-                    progress_percentage=0,
-                    instance_data=instance_data,
-                    initiated_by=self.user
+                    current_user=self.user,
+                    workflow_data=instance_data,
+                    solution_name=getattr(self, 'solution_name', 'default')
                 )
                 
                 # Get first step
                 first_step = WorkflowStep.objects.filter(
-                    workflow=workflow
-                ).order_by('step_order').first()
+                    workflow_definition=workflow
+                ).order_by('order').first()
                 
                 if first_step:
-                    instance.current_step = first_step.step_name
-                    instance.progress_percentage = (1 / workflow.steps.count()) * 100
+                    instance.current_step = first_step
                     instance.save()
                 
                 # Log workflow start
                 WorkflowExecutionLog.objects.create(
                     workflow_instance=instance,
                     action='workflow_started',
-                    action_data={'step': instance.current_step},
+                    action_data={'step': instance.current_step.name if instance.current_step else 'start'},
                     executed_by=self.user
                 )
                 
-                self.logger.info(f"Workflow instance started: {instance.instance_id}")
+                self.logger.info(f"Workflow instance started: {instance.id}")
                 
                 return {
                     'success': True,
-                    'instance_id': instance.instance_id,
+                    'instance_id': instance.id,
                     'workflow_name': workflow.name,
-                    'current_step': instance.current_step,
+                    'current_step': instance.current_step.name if instance.current_step else 'start',
                     'message': 'Workflow instance started successfully'
                 }
                 

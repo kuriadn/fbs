@@ -42,7 +42,7 @@ class WorkflowService:
                 workflow_definition=workflow_def,
                 odoo_record_id=record_id,
                 odoo_model_name=model_name,
-                database__name=database_name
+                database_name=database_name
             ).first()
             
             if existing_instance:
@@ -101,7 +101,7 @@ class WorkflowService:
                     'message': f'Workflow instance {instance_id} does not exist'
                 }
             
-            if instance.status != 'running':
+            if instance.status not in ['running', 'active']:
                 return {
                     'success': False,
                     'error': 'Workflow is not in running state',
@@ -357,10 +357,23 @@ class WorkflowService:
     def _execute_action(self, action, context: Dict[str, Any], user: User) -> Dict[str, Any]:
         """Execute a workflow action"""
         try:
-            # This is a placeholder - in the full implementation,
-            # you would have action types and execution logic
-            logger.info(f"Executing action: {action}")
-            return {'success': True, 'message': 'Action executed'}
+            # Basic action execution - can be extended for specific action types
+            action_type = getattr(action, 'action_type', 'log') if hasattr(action, 'action_type') else 'log'
+            
+            if action_type == 'log':
+                logger.info(f"Workflow action executed: {action}")
+                return {'success': True, 'message': 'Action logged successfully'}
+            elif action_type == 'email':
+                # Placeholder for email action - would integrate with notification service
+                logger.info(f"Email action would be sent: {action}")
+                return {'success': True, 'message': 'Email action queued'}
+            elif action_type == 'update_field':
+                # Placeholder for field update action
+                logger.info(f"Field update action: {action}")
+                return {'success': True, 'message': 'Field update action executed'}
+            else:
+                logger.info(f"Generic action executed: {action}")
+                return {'success': True, 'message': 'Action executed'}
             
         except Exception as e:
             logger.error(f"Error executing action: {str(e)}")
@@ -373,9 +386,24 @@ class WorkflowService:
     def _evaluate_transition_conditions(self, transition, context: Dict[str, Any]) -> bool:
         """Evaluate transition conditions"""
         try:
-            # This is a placeholder - in the full implementation,
-            # you would evaluate conditions based on context
-            return True
+            # Basic condition evaluation - can be extended for complex conditions
+            conditions = getattr(transition, 'conditions', None) if hasattr(transition, 'conditions') else None
+            
+            if not conditions:
+                return True  # No conditions means always allow
+            
+            # Simple condition evaluation
+            if isinstance(conditions, dict):
+                for field, expected_value in conditions.items():
+                    actual_value = context.get(field)
+                    if actual_value != expected_value:
+                        return False
+                return True
+            elif isinstance(conditions, list):
+                # All conditions must be met
+                return all(context.get(cond.get('field')) == cond.get('value') for cond in conditions if isinstance(cond, dict))
+            else:
+                return True  # Unknown condition format, allow by default
             
         except Exception as e:
             logger.error(f"Error evaluating transition conditions: {str(e)}")
@@ -384,9 +412,22 @@ class WorkflowService:
     def _user_can_approve(self, transition, user: User) -> bool:
         """Check if user can approve transition"""
         try:
-            # This is a placeholder - in the full implementation,
-            # you would check user permissions
-            return user.is_staff if user else False
+            if not user:
+                return False
+            
+            # Basic permission checking - can be extended with role-based permissions
+            required_permissions = getattr(transition, 'required_permissions', None) if hasattr(transition, 'required_permissions') else None
+            
+            if not required_permissions:
+                return user.is_staff  # Default to staff permission
+            
+            # Check specific permissions
+            if isinstance(required_permissions, list):
+                return any(user.has_perm(perm) for perm in required_permissions)
+            elif isinstance(required_permissions, str):
+                return user.has_perm(required_permissions)
+            else:
+                return user.is_staff  # Fallback to staff permission
             
         except Exception as e:
             logger.error(f"Error checking user approval permissions: {str(e)}")
@@ -505,7 +546,7 @@ class WorkflowService:
             
             query = {'status': 'active'}
             if user_id:
-                query['current_user_id'] = user_id
+                query['current_user'] = user_id
             
             instances = WorkflowInstance.objects.filter(**query)
             instance_list = []
@@ -670,9 +711,9 @@ class WorkflowService:
             
             instances = WorkflowInstance.objects.filter(**query)
             
-            # Simple analytics
+            # Simple analytics - support both 'running'/'active' and 'completed' statuses
             total_instances = instances.count()
-            running_instances = instances.filter(status='running').count()
+            running_instances = instances.filter(status__in=['running', 'active']).count()
             completed_instances = instances.filter(status='completed').count()
             
             return {

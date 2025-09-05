@@ -28,7 +28,7 @@ logger = logging.getLogger('fbs_dms')
 def document_list(request):
     """List documents or create new document"""
     
-    company_id = request.GET.get('company_id') or request.user.company_id
+    company_id = request.GET.get('company_id') or getattr(request.user, 'company_id', 'default')
     
     if request.method == 'GET':
         return _get_document_list(request, company_id)
@@ -42,7 +42,7 @@ def document_list(request):
 def document_detail(request, document_id):
     """Get, update, or delete a specific document"""
     
-    company_id = request.GET.get('company_id') or request.user.company_id
+    company_id = request.GET.get('company_id') or getattr(request.user, 'company_id', 'default')
     
     if request.method == 'GET':
         return _get_document_detail(request, document_id, company_id)
@@ -57,7 +57,7 @@ def document_detail(request, document_id):
 @login_required
 def document_approve(request, document_id):
     """Approve a document"""
-    company_id = request.GET.get('company_id') or request.user.company_id
+    company_id = request.GET.get('company_id') or getattr(request.user, 'company_id', 'default')
     return _approve_document(request, document_id, company_id)
 
 
@@ -66,7 +66,7 @@ def document_approve(request, document_id):
 @login_required
 def document_reject(request, document_id):
     """Reject a document"""
-    company_id = request.GET.get('company_id') or request.user.company_id
+    company_id = request.GET.get('company_id') or getattr(request.user, 'company_id', 'default')
     return _reject_document(request, document_id, company_id)
 
 
@@ -75,7 +75,7 @@ def document_reject(request, document_id):
 @login_required
 def document_types(request):
     """Get available document types"""
-    company_id = request.GET.get('company_id') or request.user.company_id
+    company_id = request.GET.get('company_id') or getattr(request.user, 'company_id', 'default')
     return _get_document_types(request, company_id)
 
 
@@ -84,7 +84,7 @@ def document_types(request):
 @login_required
 def document_categories(request):
     """Get available document categories"""
-    company_id = request.GET.get('company_id') or request.user.company_id
+    company_id = request.GET.get('company_id') or getattr(request.user, 'company_id', 'default')
     return _get_document_categories(request, company_id)
 
 

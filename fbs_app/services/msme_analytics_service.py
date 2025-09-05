@@ -28,7 +28,7 @@ from ..models.accounting import (
 )
 from ..models.compliance import ComplianceRule, AuditTrail
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('fbs_app')
 
 
 class MSMEAnalyticsService:

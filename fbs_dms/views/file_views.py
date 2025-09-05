@@ -24,7 +24,7 @@ logger = logging.getLogger('fbs_dms')
 def file_upload(request):
     """Upload a file"""
     try:
-        company_id = request.GET.get('company_id') or request.user.company_id
+        company_id = request.GET.get('company_id') or getattr(request.user, 'company_id', 'default')
         
         if 'file' not in request.FILES:
             return JsonResponse({
@@ -70,7 +70,7 @@ def file_upload(request):
 def file_download(request, file_id):
     """Download a file"""
     try:
-        company_id = request.GET.get('company_id') or request.user.company_id
+        company_id = request.GET.get('company_id') or getattr(request.user, 'company_id', 'default')
         
         # Initialize service
         service = FileService(company_id)
@@ -107,7 +107,7 @@ def file_download(request, file_id):
 def file_delete(request, file_id):
     """Delete a file"""
     try:
-        company_id = request.GET.get('company_id') or request.user.company_id
+        company_id = request.GET.get('company_id') or getattr(request.user, 'company_id', 'default')
         
         # Initialize service
         service = FileService(company_id)
@@ -139,7 +139,7 @@ def file_delete(request, file_id):
 def file_info(request, file_id):
     """Get file information"""
     try:
-        company_id = request.GET.get('company_id') or request.user.company_id
+        company_id = request.GET.get('company_id') or getattr(request.user, 'company_id', 'default')
         
         # Initialize service
         service = FileService(company_id)
@@ -171,7 +171,7 @@ def file_info(request, file_id):
 def file_validate(request):
     """Validate a file against document type"""
     try:
-        company_id = request.GET.get('company_id') or request.user.company_id
+        company_id = request.GET.get('company_id') or getattr(request.user, 'company_id', 'default')
         
         if 'file' not in request.FILES:
             return JsonResponse({

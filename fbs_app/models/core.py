@@ -13,7 +13,7 @@ from datetime import timedelta
 import secrets
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('fbs_app')
 
 
 class OdooDatabase(models.Model):

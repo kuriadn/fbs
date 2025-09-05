@@ -23,7 +23,7 @@ logger = logging.getLogger('fbs_dms')
 def search_documents(request):
     """Search documents with various criteria"""
     
-    company_id = request.GET.get('company_id') or request.user.company_id
+    company_id = request.GET.get('company_id') or getattr(request.user, 'company_id', 'default')
     
     if request.method == 'GET':
         return _search_documents_get(request, company_id)
@@ -37,7 +37,7 @@ def search_documents(request):
 def search_suggestions(request):
     """Get search suggestions"""
     try:
-        company_id = request.GET.get('company_id') or request.user.company_id
+        company_id = request.GET.get('company_id') or getattr(request.user, 'company_id', 'default')
         query = request.GET.get('query', '')
         limit = min(int(request.GET.get('limit', 10)), 20)
         
@@ -72,7 +72,7 @@ def search_suggestions(request):
 def search_statistics(request):
     """Get search statistics"""
     try:
-        company_id = request.GET.get('company_id') or request.user.company_id
+        company_id = request.GET.get('company_id') or getattr(request.user, 'company_id', 'default')
         
         # Initialize service
         service = SearchService(company_id)
