@@ -1,7 +1,7 @@
-# 🚀 FBS Suite v2.0.5 Release Notes
+# 🚀 FBS Suite v2.0.5 Release Notes (SUPERSEDED BY v2.0.6)
 
 **Release Date:** January 15, 2025  
-**Version:** 2.0.5  
+**Version:** 2.0.5 **[DEPRECATED - USE v2.0.6]**  
 **Previous Version:** 2.0.4  
 **Release Type:** Patch Release - Critical Fixes
 
@@ -130,12 +130,12 @@ The entire FBS Suite (all 3 modules) is now **production-ready** with:
 
 ### **New Installations**
 ```bash
-pip install fbs-suite==2.0.5
+pip install fbs-suite==2.0.6
 ```
 
 ### **Upgrading from 2.0.4**
 ```bash
-pip install --upgrade fbs-suite==2.0.5
+pip install --upgrade fbs-suite==2.0.6
 python manage.py migrate
 ```
 

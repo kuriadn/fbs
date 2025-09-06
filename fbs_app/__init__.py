@@ -5,6 +5,6 @@ A comprehensive business solution platform that can be installed into any Django
 Provides MSME business management capabilities with Odoo ERP integration.
 """
 
-__version__ = '2.0.5'
+__version__ = '2.0.6'
 __author__ = 'Fayvad Digital'
 __license__ = 'Proprietary'

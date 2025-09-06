@@ -385,27 +385,68 @@ class OdooIntegrationInterface:
         # Map filters to domain format expected by OdooClient
         domain = filters if filters else []
         db_name = database_name or f"fbs_{self.solution_name}_db"
-        return self._odoo_client.list_records(model_name, '', db_name, domain, fields, None, limit, 0)
+        corrected_model_name = self._map_model_name(model_name)
+        return self._odoo_client.list_records(corrected_model_name, '', db_name, domain, fields, None, limit, 0)
     
     def get_record(self, model_name: str, record_id: int, fields: Optional[List[str]] = None, database_name: Optional[str] = None) -> Dict[str, Any]:
         """Get single record from Odoo"""
         db_name = database_name or f"fbs_{self.solution_name}_db"
-        return self._odoo_client.get_record(model_name, record_id, '', db_name, fields)
+        corrected_model_name = self._map_model_name(model_name)
+        return self._odoo_client.get_record(corrected_model_name, record_id, '', db_name, fields)
     
     def create_record(self, model_name: str, record_data: Dict[str, Any], database_name: Optional[str] = None) -> Dict[str, Any]:
         """Create record in Odoo"""
         db_name = database_name or f"fbs_{self.solution_name}_db"
-        return self._odoo_client.create_record(model_name, record_data, '', db_name)
+        corrected_model_name = self._map_model_name(model_name)
+        return self._odoo_client.create_record(corrected_model_name, record_data, '', db_name)
     
     def update_record(self, model_name: str, record_id: int, record_data: Dict[str, Any], database_name: Optional[str] = None) -> Dict[str, Any]:
         """Update record in Odoo"""
         db_name = database_name or f"fbs_{self.solution_name}_db"
-        return self._odoo_client.update_record(model_name, record_id, record_data, '', db_name)
+        corrected_model_name = self._map_model_name(model_name)
+        return self._odoo_client.update_record(corrected_model_name, record_id, record_data, '', db_name)
     
     def delete_record(self, model_name: str, record_id: int, database_name: Optional[str] = None) -> Dict[str, Any]:
         """Delete record from Odoo"""
         db_name = database_name or f"fbs_{self.solution_name}_db"
-        return self._odoo_client.delete_record(model_name, record_id, '', db_name)
+        corrected_model_name = self._map_model_name(model_name)
+        return self._odoo_client.delete_record(corrected_model_name, record_id, '', db_name)
+    
+    def search_read(self, model_name: str, domain: Optional[List] = None, 
+                   fields: Optional[List[str]] = None, limit: Optional[int] = None, 
+                   offset: Optional[int] = None, database_name: Optional[str] = None) -> Dict[str, Any]:
+        """Search and read records from Odoo model - compatibility method for rental endpoints"""
+        db_name = database_name or f"fbs_{self.solution_name}_db"
+        search_domain = domain or []
+        
+        # Fix model name mapping for compatibility with rental endpoints
+        corrected_model_name = self._map_model_name(model_name)
+        
+        return self._odoo_client.search_read_records(
+            model_name=corrected_model_name,
+            domain=search_domain,
+            fields=fields,
+            database=db_name,
+            limit=limit,
+            offset=offset
+        )
+    
+    def _map_model_name(self, model_name: str) -> str:
+        """Map deprecated or incorrect model names to correct Odoo model names"""
+        model_mapping = {
+            'inventory.location': 'stock.location',  # Fix for location model issue
+            'inventory.warehouse': 'stock.warehouse',
+            'inventory.picking': 'stock.picking',
+            'inventory.move': 'stock.move',
+            # Add more mappings as needed
+        }
+        
+        mapped_name = model_mapping.get(model_name, model_name)
+        if mapped_name != model_name:
+            logger = logging.getLogger('fbs_app')
+            logger.warning(f"Model name mapping: {model_name} -> {mapped_name}")
+        
+        return mapped_name
     
     def execute_method(self, model_name: str, method_name: str, record_ids: List[int], 
                       parameters: Optional[Dict[str, Any]] = None, database_name: Optional[str] = None) -> Dict[str, Any]:

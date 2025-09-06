@@ -5,7 +5,7 @@ class FBSAppConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'fbs_app'
     verbose_name = 'FBS - Fayvad Business Suite'
-    version = '2.0.5'
+    version = '2.0.6'
     
     def ready(self):
         """Initialize app when Django starts"""

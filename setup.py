@@ -8,7 +8,7 @@ from setuptools import setup, find_packages
 if __name__ == "__main__":
     setup(
         name='fbs-suite',
-        version='2.0.5',
+        version='2.0.6',
         packages=find_packages(include=[
             'fbs_app', 'fbs_app.*',
             'fbs_dms', 'fbs_dms.*',

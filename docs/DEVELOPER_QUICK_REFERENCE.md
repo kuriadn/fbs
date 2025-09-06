@@ -1,4 +1,4 @@
-# FBS Suite v2.0.5 - Developer Quick Reference
+# FBS Suite v2.0.6 - Developer Quick Reference
 
 ## 🎯 What is FBS?
 
@@ -14,7 +14,7 @@
 
 ### **1. Install**
 ```bash
-pip install git+https://github.com/kuriadn/fbs.git@v2.0.5
+pip install git+https://github.com/kuriadn/fbs.git@v2.0.6
 ```
 
 ### **2. Add to Django Settings**

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# FBS Suite v2.0.5 Release Script
+# FBS Suite v2.0.5 Release Script (DEPRECATED - Use git_release_2.0.6.sh)
 # This script creates a git tag and release for version 2.0.5
 
 set -e

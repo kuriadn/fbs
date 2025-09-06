@@ -1,4 +1,4 @@
-# FBS Suite v2.0.5 - Embedding Guide
+# FBS Suite v2.0.6 - Embedding Guide
 
 ## 🎯 Overview
 
@@ -58,10 +58,10 @@ cd /path/to/fbs
 pip install -e .
 
 # Option 2: Install from Git repository
-pip install git+https://github.com/kuriadn/fbs.git@v2.0.5
+pip install git+https://github.com/kuriadn/fbs.git@v2.0.6
 
 # Option 3: Install from PyPI (when available)
-pip install fbs-suite==2.0.5
+pip install fbs-suite==2.0.6
 ```
 
 ### **Step 2: Add FBS to Your Django Settings**
@@ -791,7 +791,7 @@ def fbs_interface():
 
 ---
 
-**FBS Suite v2.0.5** - Ready for embedding! 🚀
+**FBS Suite v2.0.6** - Ready for embedding! 🚀
 
 *This guide provides practical, step-by-step instructions for integrating FBS into your Django solutions. Follow the patterns and examples to build robust, scalable business applications.*
 

@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.6] - 2025-01-06
+
+### Critical Fixes
+- Added missing `search_read` method to `OdooIntegrationInterface`
+- Implemented automatic model name mapping (`inventory.location` → `stock.location`)
+- Enhanced all CRUD methods with model mapping for compatibility
+- Fixed 6 critical rental management endpoints that were failing
+- Resolved production-blocking issues for rental integration team
+
+### Documentation
+- Added `RENTAL_ENDPOINTS_FIX_GUIDE.md` with implementation examples
+- Created comprehensive `FBS_v2.0.6_RELEASE_NOTES.md`
+- Updated all version references across documentation
+
+### Technical Improvements
+- Model name mapping system for deprecated Odoo model references
+- Backward-compatible interface enhancements
+- Production-ready hotfix for critical integration failures
+
 ## [2.0.5] - 2025-01-15
 
 ### Fixed

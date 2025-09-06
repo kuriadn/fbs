@@ -4,10 +4,10 @@ FBS Version Information
 This module provides version information for the FBS application.
 """
 
-__version__ = '2.0.5'
-__version_info__ = (2, 0, 5)
-__release_date__ = '2025-01-15'
-__release_type__ = 'Critical Fixes & System Verification'
+__version__ = '2.0.6'
+__version_info__ = (2, 0, 6)
+__release_date__ = '2025-01-06'
+__release_type__ = 'Critical Hotfix - Rental Integration Issues'
 
 # Version history
 VERSION_HISTORY = {

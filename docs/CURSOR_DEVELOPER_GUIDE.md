@@ -1,4 +1,4 @@
-# FBS Suite v2.0.5 - Cursor Developer Guide
+# FBS Suite v2.0.6 - Cursor Developer Guide
 
 ## 🎯 Overview
 
@@ -46,10 +46,10 @@ This guide provides **developers and Cursor AI** with comprehensive information 
 pip install -e .
 
 # From Git repository
-pip install git+https://github.com/kuriadn/fbs.git@v2.0.5
+pip install git+https://github.com/kuriadn/fbs.git@v2.0.6
 
 # From PyPI (when available)
-pip install fbs-suite==2.0.5
+pip install fbs-suite==2.0.6
 ```
 
 ### **2. Add to Django Settings**
@@ -547,6 +547,6 @@ cleaned_data = fbs.utils.sanitize_input(user_input)
 
 ---
 
-**FBS Suite v2.0.5** - Ready for production embedding! 🚀
+**FBS Suite v2.0.6** - Ready for production embedding! 🚀
 
 *This guide follows DRY and KISS principles, providing comprehensive coverage without over-engineering or hallucinations.*
