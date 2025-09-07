@@ -584,20 +584,27 @@ class OdooIntegrationInterface:
             'odoo_db_name': f"fbs_{self.solution_name}_db"
         }
     
-    def install_modules(self, modules: List[str], database_name: str = None) -> Dict[str, Any]:
+    def install_modules(self, modules: List[str], database_name: str = None, 
+                       force_reinstall: bool = False) -> Dict[str, Any]:
         """
-        Install additional Odoo modules in the solution's database
+        Install additional Odoo modules in the solution's database with intelligent incremental installation
         
         Args:
-            modules: List of modules to install
+            modules: List of modules to ensure are installed
             database_name: Optional database name override
+            force_reinstall: If True, reinstall existing modules (use with caution!)
             
         Returns:
-            Dict: Result of module installation
+            Dict: Detailed installation results including delta analysis
         """
-        from .services.database_service import DatabaseService
-        db_service = DatabaseService(self.solution_name)
-        return db_service.install_odoo_modules(self.solution_name, modules, database_name)
+        from .services.incremental_module_service import IncrementalModuleService
+        
+        incremental_service = IncrementalModuleService(self.solution_name)
+        return incremental_service.install_modules_incrementally(
+            requested_modules=modules,
+            database_name=database_name,
+            force_reinstall=force_reinstall
+        )
     
     def get_available_modules(self) -> Dict[str, Any]:
         """
@@ -609,6 +616,37 @@ class OdooIntegrationInterface:
         from .services.database_service import DatabaseService
         db_service = DatabaseService(self.solution_name)
         return db_service.get_available_odoo_modules()
+    
+    def get_module_installation_status(self, database_name: str = None) -> Dict[str, Any]:
+        """
+        Get detailed status of all modules in the database
+        
+        Args:
+            database_name: Optional database name override
+            
+        Returns:
+            Dict: Detailed module status information
+        """
+        from .services.incremental_module_service import IncrementalModuleService
+        
+        incremental_service = IncrementalModuleService(self.solution_name)
+        return incremental_service.get_installation_status(database_name)
+    
+    def validate_modules(self, required_modules: List[str], database_name: str = None) -> Dict[str, Any]:
+        """
+        Validate that required modules are properly installed
+        
+        Args:
+            required_modules: List of modules that should be installed
+            database_name: Optional database name override
+            
+        Returns:
+            Dict: Validation results
+        """
+        from .services.incremental_module_service import IncrementalModuleService
+        
+        incremental_service = IncrementalModuleService(self.solution_name)
+        return incremental_service._validate_installation(required_modules, database_name or f"fbs_{self.solution_name}_db")
     
     def create_solution_databases_with_modules(self, core_modules: List[str] = None, 
                                              additional_modules: List[str] = None) -> Dict[str, Any]:
