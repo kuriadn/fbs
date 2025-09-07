@@ -419,34 +419,120 @@ class OdooIntegrationInterface:
         db_name = database_name or f"fbs_{self.solution_name}_db"
         search_domain = domain or []
         
-        # Fix model name mapping for compatibility with rental endpoints
+        # Apply model name mapping for backwards compatibility
         corrected_model_name = self._map_model_name(model_name)
         
-        return self._odoo_client.search_read_records(
-            model_name=corrected_model_name,
-            domain=search_domain,
-            fields=fields,
-            database=db_name,
-            limit=limit,
-            offset=offset
-        )
+        # Log the operation for debugging
+        logger = logging.getLogger('fbs_app')
+        if corrected_model_name != model_name:
+            logger.info(f"search_read: Using mapped model '{corrected_model_name}' for requested '{model_name}'")
+        else:
+            logger.debug(f"search_read: Using model '{model_name}' directly")
+        
+        try:
+            result = self._odoo_client.search_read_records(
+                model_name=corrected_model_name,
+                domain=search_domain,
+                fields=fields,
+                database=db_name,
+                limit=limit,
+                offset=offset
+            )
+            
+            # If the query failed with a field error, provide helpful context
+            if not result.get('success') and 'Invalid field' in str(result.get('error', '')):
+                error_msg = result.get('error', '')
+                enhanced_error = f"Field validation failed for model '{corrected_model_name}'. "
+                if corrected_model_name != model_name:
+                    enhanced_error += f"Note: '{model_name}' was mapped to '{corrected_model_name}'. "
+                enhanced_error += f"Original error: {error_msg}"
+                
+                logger.error(enhanced_error)
+                result['error'] = enhanced_error
+                result['debug_info'] = {
+                    'requested_model': model_name,
+                    'mapped_model': corrected_model_name,
+                    'requested_fields': fields,
+                    'domain': search_domain
+                }
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"search_read failed for model '{corrected_model_name}': {str(e)}")
+            return {
+                'success': False,
+                'error': str(e),
+                'debug_info': {
+                    'requested_model': model_name,
+                    'mapped_model': corrected_model_name,
+                    'requested_fields': fields,
+                    'domain': search_domain
+                }
+            }
     
     def _map_model_name(self, model_name: str) -> str:
-        """Map deprecated or incorrect model names to correct Odoo model names"""
-        model_mapping = {
-            'inventory.location': 'stock.location',  # Fix for location model issue
-            'inventory.warehouse': 'stock.warehouse',
-            'inventory.picking': 'stock.picking',
-            'inventory.move': 'stock.move',
-            # Add more mappings as needed
+        """Map deprecated or incorrect model names to correct Odoo model names
+        
+        This method provides backwards compatibility for deprecated 'inventory.*' models
+        while ensuring direct 'stock.*' model usage works correctly.
+        """
+        # Only map deprecated 'inventory.*' models - leave everything else unchanged
+        deprecated_mapping = {
+            'inventory.location': 'stock.location',    # Deprecated → Correct
+            'inventory.warehouse': 'stock.warehouse',  # Deprecated → Correct  
+            'inventory.picking': 'stock.picking',      # Deprecated → Correct
+            'inventory.move': 'stock.move',            # Deprecated → Correct
         }
         
-        mapped_name = model_mapping.get(model_name, model_name)
-        if mapped_name != model_name:
-            logger = logging.getLogger('fbs_app')
-            logger.warning(f"Model name mapping: {model_name} -> {mapped_name}")
+        # Only apply mapping for deprecated models
+        if model_name.startswith('inventory.'):
+            mapped_name = deprecated_mapping.get(model_name, model_name)
+            if mapped_name != model_name:
+                logger = logging.getLogger('fbs_app')
+                logger.warning(f"Deprecated model mapping: {model_name} -> {mapped_name}")
+            return mapped_name
         
-        return mapped_name
+        # Return all other models unchanged (including stock.*, res.*, etc.)
+        return model_name
+    
+    def _validate_model_exists(self, model_name: str, database_name: str) -> bool:
+        """Validate that a model exists in the Odoo database
+        
+        Args:
+            model_name: Name of the model to validate
+            database_name: Name of the Odoo database
+            
+        Returns:
+            bool: True if model exists, False otherwise
+        """
+        try:
+            # Use discovery service to check if model exists
+            models_result = self._discovery_service.discover_models(database_name)
+            if not models_result.get('success'):
+                logger.warning(f"Could not validate model '{model_name}' - discovery failed")
+                return True  # Assume valid if we can't check
+            
+            models_data = models_result.get('data', [])
+            if isinstance(models_data, dict) and 'models' in models_data:
+                models = models_data['models']
+            elif isinstance(models_data, list):
+                models = models_data
+            else:
+                return True  # Assume valid if format unexpected
+            
+            # Check if model exists
+            model_names = [m.get('name', '') for m in models if isinstance(m, dict)]
+            exists = model_name in model_names
+            
+            if not exists:
+                logger.error(f"Model '{model_name}' not found in database '{database_name}'. Available models: {model_names[:10]}...")
+                
+            return exists
+            
+        except Exception as e:
+            logger.warning(f"Model validation failed for '{model_name}': {str(e)}")
+            return True  # Assume valid if validation fails
     
     def execute_method(self, model_name: str, method_name: str, record_ids: List[int], 
                       parameters: Optional[Dict[str, Any]] = None, database_name: Optional[str] = None) -> Dict[str, Any]:
