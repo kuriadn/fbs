@@ -1,37 +1,49 @@
-# Core Django dependencies
-Django>=4.2.0,<5.1.0
-psycopg2-binary>=2.9.0,<3.0.0
-django-cors-headers>=4.3.0,<5.0.0
-python-dateutil>=2.8.0,<3.0.0
+# FastAPI Core Dependencies - Latest Stable Versions
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+pydantic==2.10.3
+pydantic-settings==2.7.0
+
+# Async Database - Latest Stable Versions
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+alembic==1.14.0
+
+# Security and Authentication - Latest Stable Versions
+cryptography==44.0.0
+PyJWT==2.10.1
+python-multipart==0.0.19
+passlib[bcrypt]==1.7.4
+
+# HTTP Client and API Testing - Latest Stable Versions
+httpx==0.28.1
+aiohttp==3.11.10
+
+# Caching and Performance - Latest Stable Versions
+redis[hiredis]==5.2.0
+
+# Data Processing - Latest Stable Versions
+pandas==2.2.3
+numpy==1.26.4
+
+# File Handling - Latest Stable Versions
+Pillow==11.1.0
+python-magic==0.4.27
+
+# Utilities - Latest Stable Versions
+python-dotenv==1.0.1
+requests==2.32.3
+python-dateutil==2.9.0.post0
 
 # Odoo Integration
-# xmlrpc-client is a built-in Python module, no need to install
+# xmlrpc is part of Python's standard library (xmlrpc.client)
 
-# Data Processing
-pandas>=1.5.0,<3.0.0
-numpy>=1.21.0,<2.0.0
+# Logging and Monitoring - Latest Stable Versions
+structlog==24.4.0
+sentry-sdk[fastapi]==2.18.0
 
-# Caching and Performance
-redis>=4.5.0,<5.0.0
-django-redis>=5.3.0,<6.0.0
+# Email and Notifications
+aiosmtplib==3.0.2
 
-# Security and Authentication
-cryptography>=41.0.0,<42.0.0
-PyJWT>=2.8.0,<3.0.0
-
-# File Handling
-Pillow>=9.5.0,<11.0.0
-python-magic>=0.4.27,<1.0.0
-
-# Utilities
-python-dotenv>=1.0.0,<2.0.0
-requests>=2.31.0,<3.0.0
-urllib3>=1.26.0,<2.0.0
-
-# Database
-psycopg2-binary>=2.9.0,<3.0.0
-SQLAlchemy>=2.0.0,<3.0.0
-
-# Logging and Monitoring
-structlog>=23.1.0,<24.0.0
-sentry-sdk>=1.32.0,<2.0.0
+# Validation and Serialization
+email-validator==2.2.0

@@ -1,28 +1,69 @@
-# FBS (Fayvad Business Suite) - Odoo-Driven Business Platform
+# FBS FastAPI v3.1.0 - Fayvad Business Suite
 
 **Copyright © 2025 Fayvad Digital. All rights reserved.**
 
+[![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)](https://github.com/kuriadn/fbs)
+[![Docker](https://img.shields.io/badge/docker-v2+-blue.svg)](https://docs.docker.com/compose/compose-file/compose-versioning/)
+[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115.6-green.svg)](https://fastapi.tiangolo.com)
+
 ## 🎯 Overview
 
-**FBS (Fayvad Business Suite) v2.0.4** is a sophisticated, embeddable Django application that serves as a comprehensive business management platform for MSMEs (Micro, Small, and Medium Enterprises). FBS is a **full-featured business intelligence and automation engine** that integrates seamlessly with Odoo ERP while providing extensive standalone capabilities.
+**FBS FastAPI v3.1.0** is a revolutionary, production-ready business suite built with modern FastAPI, featuring automated module generation capabilities for seamless Odoo integration. This is a complete modernization of the FBS platform with cutting-edge technology and enhanced business intelligence.
 
-**Version 2.0.4** includes critical bug fixes that ensure 100% Odoo integration functionality and resolves all service layer issues.
+**Version 3.1.0** introduces groundbreaking module generation technology that automates Odoo module creation, along with a complete migration to modern FastAPI architecture with async support, Pydantic v2, and SQLAlchemy 2.0. This release includes enhanced embeddability patterns and comprehensive Docker support.
 
-**FBS is designed as an embedding engine** - not the final solution itself, but the powerful foundation that drives custom business solutions. When embedded into Django projects, it transforms them into feature-rich business management platforms with **Odoo as the primary data store**.
+**FBS is designed as a modern business platform** - providing both standalone capabilities and seamless Odoo integration through automated module generation. When deployed, it serves as a powerful foundation for custom business solutions with **automated Odoo module creation and deployment**.
+
+## 🗄️ **Database Architecture**
+
+**FBS FastAPI v3.1.0 uses a hybrid deployment model:**
+
+### **Containerized Application + Host Services**
+```
+┌─────────────────┐     ┌─────────────────┐
+│   Host Machine  │     │   Docker        │
+│   (Services)    │◄────┤   Container     │
+├─────────────────┤     ├─────────────────┤
+│ • PostgreSQL    │     │ • FBS FastAPI   │
+│   (localhost)   │     │   (Container)   │
+│ • Redis         │     │                 │
+│   (localhost)   │     │ • Module Gen    │
+│ • Odoo          │     │ • Static Files  │
+│   (localhost)   │     │ • API Endpoints │
+│ • Nginx         │     └─────────────────┘
+│   (localhost)   │
+└─────────────────┘
+```
+
+**Why this architecture?**
+- **Database Persistence**: PostgreSQL runs on host for data persistence
+- **Service Flexibility**: Redis, Odoo, Nginx on host for easy management
+- **Application Isolation**: FBS FastAPI in Docker for easy deployment
+- **Network Access**: Uses `host.docker.internal` for seamless connectivity
 
 ## ✨ Core Capabilities
 
-### 🏗️ **Odoo-Driven Architecture**
-- **Primary Data Storage**: Odoo ERP serves as the main data repository
-- **FBS Virtual Fields**: Extend Odoo models with custom data without modifying Odoo
-- **Django UI Layer**: Django models serve as UI references and business logic
-- **Hybrid Data Model**: Odoo + Virtual Fields + Django UI for maximum flexibility
+### 🚀 **Revolutionary Module Generation (v3.0.0)**
+- **Automated Odoo Module Creation**: Generate complete modules from specifications
+- **Field Type Mappings**: Automatic conversion between data types
+- **Workflow States**: Dynamic state management and transitions
+- **Security Rules**: Automated access control and permissions
+- **View Generation**: Complete form, list, and search views
+- **ZIP Packaging**: Ready-to-install module packages
+
+### 🏗️ **Modern FastAPI Architecture**
+- **FastAPI Framework**: Latest stable (0.115.6) with async support
+- **Pydantic v2**: Modern data validation and configuration
+- **SQLAlchemy 2.0**: Latest ORM with DeclarativeBase patterns
+- **Async/Await**: Full asynchronous operations
+- **Type Safety**: Complete type annotations throughout
 
 ### 🔗 **Advanced Odoo Integration**
 - **Complete CRUD Operations**: Full create, read, update, delete for any Odoo model
 - **Dynamic Model Discovery**: Automatically discovers and maps Odoo models, fields, and modules
 - **Module Management**: Install, uninstall, and manage Odoo modules programmatically
-- **Field Merging**: Seamlessly merge Odoo data with FBS virtual fields
+- **Automated Module Deployment**: Generate and deploy modules via API
 - **XML-RPC Client**: Robust, error-handling Odoo communication layer
 
 ### ⚡ **Sophisticated Workflow Engine**
@@ -51,8 +92,8 @@
 - **Financial Health Indicators**: Real-time financial position analysis
 
 ### 🔐 **Enterprise Security & Authentication**
+- **JWT Authentication**: Secure token-based authentication with expiry management
 - **Handshake Authentication**: Secure token-based authentication with expiry management
-- **Token Mapping**: Sophisticated user-database token management
 - **Request Logging**: Comprehensive audit trails with performance metrics
 - **Role-Based Access**: Fine-grained permission control
 
@@ -64,22 +105,30 @@
 
 ## 🏗️ Architecture
 
-The FBS project follows a **clean, service-oriented architecture** with **Odoo as the primary data store**:
+FBS FastAPI v3.0.0 follows a **modern, service-oriented architecture** with **automated module generation and Odoo integration**:
 
 ### **Project Structure**
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    FBS Project (fbs_project/)              │
+│              FBS FastAPI v3.0.0 Project                     │
 ├─────────────────────────────────────────────────────────────┤
 │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────┐ │
-│  │   Django Core   │  │    FBS App      │  │  Other Apps │ │
-│  │                 │  │   (fbs_app/)    │  │             │ │
-│  │ • Settings      │  │ • Service Layer │  │ • Blog      │ │
-│  │ • URL Routing   │  │ • Interface     │  │ • E-commerce│ │
-│  │ • Configuration │  │ • Models        │  │ • etc.      │ │
-│  └─────────────────┘  │ • Admin         │  └─────────────┘ │
-│                       │ • Commands      │                 │
-│                       └─────────────────┘                 │
+│  │   FastAPI Core  │  │  FBS Services   │  │  Templates  │ │
+│  │                 │  │                 │  │             │ │
+│  │ • Main App      │  │ • Auth Service  │  │ • Module     │ │
+│  │ • Routing       │  │ • Module Gen    │  │ • Templates  │ │
+│  │ • Middleware    │  │ • DMS Service   │  │ • Views      │ │
+│  │ └─────────────────┘  │ • BI Service   │  └─────────────┘ │
+│                        │ • License Mgmt  │                 │
+│                        └─────────────────┘                 │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────┐ │
+│  │   SQLAlchemy    │  │   Pydantic v2   │  │   Redis     │ │
+│  │   2.0 Models    │  │   Config        │  │   Cache     │ │
+│  │                 │  │                 │  │             │ │
+│  │ • DeclarativeBase│  │ • ConfigDict   │  │ • Sessions  │ │
+│  │ • Async Support  │  │ • Validation   │  │ • TTL       │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────┘ │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -87,25 +136,76 @@ The FBS project follows a **clean, service-oriented architecture** with **Odoo a
                        │   Odoo ERP      │
                        │ (Primary Data)  │
                        │                 │
-                       │ • ir.attachment │
-                       │ • res.partner   │
-                       │ • res.company   │
-                       │ • + Virtual     │
-                       │   Fields        │
+                       │ • Auto-generated│
+                       │   Modules       │
+                       │ • Custom Models │
+                       │ • Workflows     │
+                       │ • Views         │
                        └─────────────────┘
 ```
 
 ### **Key Components**
-- **Project Level**: Configuration, routing, and project-wide settings
-- **App Level**: Business logic, models, services, and app-specific functionality
-- **Service Layer**: Business logic encapsulated in service classes
-- **Interface Layer**: Clean service interfaces for accessing business capabilities
-- **Model Layer**: Django models with business logic methods (UI references)
-- **Admin Interface**: Django admin for data management
-- **Management Commands**: CLI interfaces for administrative tasks
-- **Signals**: Event-driven functionality for business processes
+- **FastAPI Core**: Main application with routing and middleware
+- **Service Layer**: Business logic encapsulated in async service classes
+- **Module Generation Engine**: Automated Odoo module creation system
+- **SQLAlchemy 2.0 Models**: DeclarativeBase with async support
+- **Pydantic v2 Config**: Modern configuration with ConfigDict patterns
+- **Template System**: Jinja2-based module generation templates
+- **Redis Cache**: High-performance caching layer
+- **JWT Authentication**: Secure token-based authentication
 
 ## 🚀 Quick Start
+
+### **Option 1: Docker v2+ Setup (Recommended)**
+
+**Architecture: FBS in Docker → Host Services (PostgreSQL, Redis, Odoo, Nginx)**
+
+```bash
+# Prerequisites: Ensure host services are running
+# PostgreSQL on host:5432, Redis on host:6379, Odoo on host:8069
+
+# Clone the repository
+git clone https://github.com/kuriadn/fbs.git
+cd fbs
+
+# Start FBS FastAPI in Docker (connects to host services)
+docker-compose up -d
+
+# View logs
+docker-compose logs -f fbs-fastapi
+
+# Access the application
+# API: http://localhost:8000
+# Docs: http://localhost:8000/docs
+# Health: http://localhost:8000/health
+```
+
+**Host Services Setup:**
+```bash
+# PostgreSQL (host)
+sudo apt install postgresql postgresql-contrib
+sudo -u postgres createuser fbs_user
+sudo -u postgres createdb fbs_system_db -O fbs_user
+
+# Redis (host)
+sudo apt install redis-server
+
+# Odoo (host) - if needed
+# Install and configure Odoo on host:8069
+
+# Nginx (host) - optional reverse proxy
+sudo apt install nginx
+```
+
+**📖 For detailed deployment instructions, see [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)**
+
+### **Option 2: Manual Installation**
+
+#### **Prerequisites**
+- Python 3.10+
+- PostgreSQL database
+- Redis server
+- Odoo instance (optional, for module deployment)
 
 ### **Installation**
 
@@ -114,29 +214,61 @@ The FBS project follows a **clean, service-oriented architecture** with **Odoo a
 git clone https://github.com/kuriadn/fbs.git
 cd fbs
 
-# Install in development mode
-pip install -e .
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r ../requirements.txt
+pip install -r ../requirements-dev.txt
 ```
 
 ### **Basic Usage**
 
 ```python
-from fbs_app.interfaces import FBSInterface
+from fbs_fastapi.services.module_generation_service import ModuleSpec, FBSModuleGeneratorEngine
 
-# Initialize FBS interface
-fbs = FBSInterface('your_solution_name')
+# Create module specification
+spec = ModuleSpec(
+    name="my_custom_module",
+    description="Custom business module",
+    author="Your Organization",
+    models=[
+        {
+            "name": "my.model",
+            "description": "Custom Model",
+            "fields": [
+                {"name": "name", "type": "char", "string": "Name", "required": True},
+                {"name": "amount", "type": "float", "string": "Amount"}
+            ]
+        }
+    ]
+)
 
-# Access Odoo integration
-models = fbs.odoo.discover_models()
-records = fbs.odoo.get_records('res.partner')
+# Generate module
+generator = FBSModuleGeneratorEngine()
+module_path = generator.generate_module(spec)
+print(f"Module generated: {module_path}")
+```
 
-# Access MSME capabilities
-dashboard = fbs.msme.get_dashboard()
-kpis = fbs.msme.calculate_kpis()
+### **API Usage**
 
-# Access virtual fields
-custom_data = fbs.fields.get_custom_fields('res.partner', 1)
-fbs.fields.set_custom_field('res.partner', 1, 'custom_field', 'value')
+```python
+import httpx
+
+# Generate module via API
+async with httpx.AsyncClient() as client:
+    response = await client.post(
+        "http://localhost:8000/api/module-gen/generate",
+        json={
+            "name": "api_module",
+            "description": "API Generated Module",
+            "author": "API User",
+            "models": [...]
+        }
+    )
+    result = response.json()
+    print(f"Module created: {result['module_path']}")
 ```
 
 ## 📚 Documentation

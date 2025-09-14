@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  fbs-fastapi:
+    build:
+      context: ./fbs_fastapi
+      dockerfile: Dockerfile
+    container_name: fbs-fastapi-app
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=FBS - Fayvad Business Suite
+      - APP_VERSION=3.1.0
+      - DEBUG=false
+      - SECRET_KEY=your-super-secret-key-change-in-production
+      # Host database connections (not Docker containers)
+      - DATABASE_URL=postgresql+asyncpg://fbs_user:fbs_password@host.docker.internal:5432/fbs_system_db
+      - REDIS_URL=redis://host.docker.internal:6379/0
+      - ODOO_BASE_URL=http://host.docker.internal:8069
+      - ODOO_TIMEOUT=30
+      - ODOO_USER=odoo
+      - ODOO_PASSWORD=odoo_password
+      - ENABLE_MODULE_GENERATION=true
+      - MODULE_OUTPUT_DIR=./generated_modules
+    volumes:
+      - ./fbs_fastapi/generated_modules:/app/generated_modules
+      - ./fbs_fastapi/logs:/app/logs
+    # Use host network mode for accessing host services
+    network_mode: host
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

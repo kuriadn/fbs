@@ -2,6 +2,7 @@
 # FBS (Fayvad Business Suite) - Comprehensive .gitignore
 # =============================================================================
 # This file excludes sensitive data while preserving essential project files
+# Last cleaned up: 2024 - Removed obsolete Django entries after FastAPI migration
 
 # =============================================================================
 # PYTHON STANDARD IGNORES
@@ -34,11 +35,11 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
+# MANIFEST (removed - no longer exists)
 
-# FBS specific build artifacts
-fbs_suite.egg-info/
-UNKNOWN.egg-info/
+# FBS specific build artifacts (removed - no longer exist)
+# fbs_suite.egg-info/
+# UNKNOWN.egg-info/
 
 # PyInstaller
 *.manifest
@@ -59,28 +60,14 @@ coverage.xml
 .pytest_cache/
 
 # =============================================================================
-# DJANGO SPECIFIC IGNORES
+# DJANGO SPECIFIC IGNORES (REMOVED - No Django codebases remain)
 # =============================================================================
-
-# Django logs
-*.log
-
-# Local settings (should use environment variables instead)
-local_settings.py
-
-# Django development database
-db.sqlite3
-db.sqlite3-journal
-
-# Media files (user uploads)
-media/
-
-# Static files (collected static files)
-staticfiles/
-static_collected/
-
-# Django migrations - KEEP THESE (commenting out common mistake)
-# migrations/
+# All Django-specific entries removed as we migrated to FastAPI
+# - Django logs: *.log (kept in general logs section)
+# - local_settings.py: No longer applicable
+# - Django databases: No longer applicable
+# - Media/static files: No longer applicable
+# - Django migrations: No longer applicable
 
 # =============================================================================
 # ENVIRONMENT & CONFIGURATION
@@ -318,7 +305,7 @@ dev_config.py
 # =============================================================================
 
 # Keep essential configuration templates
-!fbs_app/config_template.py
+# !fbs_app/config_template.py (removed - fbs_app no longer exists)
 !env.example
 
 # Test files - exclude all test files by default
@@ -326,29 +313,8 @@ test_*.py
 *_test.py
 *_tests.py
 
-# Keep only essential production tests (explicitly include)
-!test_complete_workflow.py
-!test_rental_test_workflow.py
-!test_odoo_database_creation.py
-!test_module_management.py
-!test_admin_password.py
-
-# Exclude specific unnecessary test files
-test_installation.py
-test_simple_workflow.py
-test_v2.0.2_features.py
-test_automatic_database_naming.py
-test_rental_odoo_integration.py
-test_all_options.py
-test_admin_credentials.py
-fix_odoo_authentication.py
-diagnose_odoo_connection.py
-example_solution_usage.py
-
-# Keep core test infrastructure
-!fbs_app/tests/
-!*/tests/
-!conftest.py
+# Keep core test infrastructure (FastAPI only)
+!fbs_fastapi/tests/
 !pytest.ini
 
 # Keep documentation
@@ -359,8 +325,6 @@ example_solution_usage.py
 # Keep build and CI configuration
 !Makefile
 !pytest.ini
-!setup.py
-!setup.cfg
 !pyproject.toml
 !requirements*.txt
 !tox.ini
@@ -377,21 +341,11 @@ example_solution_usage.py
 !.circleci/
 
 # Keep package configuration
-!MANIFEST.in
+# !MANIFEST.in (removed - no longer exists)
 !LICENSE*
-!CHANGELOG*
+# !CHANGELOG* (removed - no longer exists)
 !AUTHORS*
 !CONTRIBUTORS*
-
-# Exclude old installation scripts
-install_v2.0.1.py
-install_v2.0.0.py
-
-# Exclude old documentation files
-FBS_v2.0.2_DATABASE_NAMING_SUMMARY.md
-RELEASE_2.0.1.md
-SETUP_ENVIRONMENT.md
-INSTALL.md
 
 # =============================================================================
 # PROJECT SPECIFIC EXCEPTIONS
