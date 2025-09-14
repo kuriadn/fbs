@@ -143,9 +143,9 @@ def get_solution_databases(solution_name):
             'HOST': os.environ.get('FBS_DB_HOST', 'localhost'),
             'PORT': os.environ.get('FBS_DB_PORT', '5432'),
         },
-        f'djo_{solution_name}_db': {
+        f'fpi_{solution_name}_db': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': f'djo_{solution_name}_db',
+            'NAME': f'fpi_{solution_name}_db',
             'USER': os.environ.get('FBS_DB_USER', 'odoo'),
             'PASSWORD': os.environ.get('FBS_DB_PASSWORD', 'your_password'),
             'HOST': os.environ.get('FBS_DB_HOST', 'localhost'),
@@ -705,7 +705,7 @@ def django_db_setup():
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': ':memory:',
         },
-        'djo_test_solution_db': {
+        'fpi_test_solution_db': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': ':memory:',
         },

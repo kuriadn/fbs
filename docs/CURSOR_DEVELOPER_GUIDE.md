@@ -32,7 +32,7 @@ This guide provides **developers and Cursor AI** with comprehensive information 
                        │   Databases     │
                        │                 │
                        │ • fbs_system_db │
-                       │ • djo_{sol}_db  │
+                       │ • fpi_{sol}_db  │
                        │ • fbs_{sol}_db  │
                        └─────────────────┘
 ```
@@ -221,7 +221,7 @@ license_info = fbs.license.get_license(license_id)
 ### **Database Naming Convention**
 
 - **`fbs_system_db`**: Shared system components (licensing, DMS)
-- **`djo_{solution}_db`**: Django solution-specific data
+- **`fpi_{solution}_db`**: Django solution-specific data
 - **`fbs_{solution}_db`**: Odoo solution-specific data
 
 ### **Database Routing**
@@ -241,7 +241,7 @@ The `FBSDatabaseRouter` automatically routes models to appropriate databases:
 # Each solution gets isolated databases
 solution_name = "my_enterprise_solution"
 
-# Django database: djo_my_enterprise_solution_db
+# Django database: fpi_my_enterprise_solution_db
 # Odoo database: fbs_my_enterprise_solution_db
 
 # No cross-solution data leakage

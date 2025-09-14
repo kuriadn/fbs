@@ -74,7 +74,7 @@ class DatabaseRoutingMiddleware(BaseHTTPMiddleware):
         # PRIORITY 2: Check for company_id-based routing (only if database exists)
         company_id = request.headers.get('X-Company-ID') or request.query_params.get('company_id')
         if company_id:
-            solution_db = f"djo_{company_id}_db"
+            solution_db = f"fpi_{company_id}_db"
             if solution_db in await self._get_available_databases():
                 logger.debug(f"Routing to company database: {solution_db}")
                 return company_id, solution_db
@@ -91,7 +91,7 @@ class DatabaseRoutingMiddleware(BaseHTTPMiddleware):
         if request.url.path.startswith('/api/dms/'):
             company_id = request.headers.get('X-Company-ID') or request.query_params.get('company_id')
             if company_id:
-                solution_db = f"djo_{company_id}_db"
+                solution_db = f"fpi_{company_id}_db"
                 if solution_db in await self._get_available_databases():
                     return company_id, solution_db
             # Default to system database if no specific routing

@@ -141,7 +141,7 @@ is_valid = fbs.license.validate_license(license_id)
 
 ### **Database Naming**
 - **`fbs_system_db`** - Shared system components
-- **`djo_{solution}_db`** - Django solution-specific data
+- **`fpi_{solution}_db`** - Django solution-specific data
 - **`fbs_{solution}_db`** - Odoo solution-specific data
 
 ### **Database Routing**
@@ -157,7 +157,7 @@ is_valid = fbs.license.validate_license(license_id)
 ```python
 # Each solution gets isolated databases
 solution_name = "my_enterprise_solution"
-# Creates: djo_my_enterprise_solution_db, fbs_my_enterprise_solution_db
+# Creates: fpi_my_enterprise_solution_db, fbs_my_enterprise_solution_db
 # No cross-solution data leakage
 ```
 

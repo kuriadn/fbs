@@ -302,7 +302,7 @@ class LicenseManager:
     def __init__(self, solution_name: str, license_key: str = None, solution_db: str = None):
         self.solution_name = solution_name
         self.license_key = license_key
-        self.solution_db = solution_db or f"djo_{solution_name}_db"
+        self.solution_db = solution_db or f"fpi_{solution_name}_db"
 
         # Get license information
         self.license_info = self._get_license_info()

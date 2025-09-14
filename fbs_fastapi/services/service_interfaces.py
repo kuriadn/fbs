@@ -491,7 +491,7 @@ class FBSInterface:
         self.license_key = license_key
 
         # Auto-generate database names (PRESERVED from Django)
-        self.django_db_name = f"djo_{solution_name}_db"
+        self.fastapi_db_name = f"fpi_{solution_name}_db"
         self.odoo_db_name = f"fbs_{solution_name}_db"
 
         # Initialize licensing system (PRESERVED from Django)
