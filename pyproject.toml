@@ -3,9 +3,9 @@ requires = ["setuptools>=59.6.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fbs-suite"
-version = "2.0.6"
-description = "Odoo-driven business management platform for Django"
+name = "fbs-fastapi"
+version = "3.1.0"
+description = "FastAPI-based business suite with automated Odoo module generation"
 readme = "README.md"
 license = {text = "Proprietary"}
 authors = [
@@ -15,9 +15,9 @@ maintainers = [
     {name = "FBS Development Team", email = "dev@fayvad.com"}
 ]
 keywords = [
-    "django", "odoo", "erp", "business", "msme", "accounting", 
-    "workflows", "compliance", "bi", "document-management", 
-    "license-management", "virtual-fields", "multi-tenant"
+    "fastapi", "odoo", "erp", "business", "msme", "accounting",
+    "workflows", "compliance", "bi", "document-management",
+    "license-management", "module-generation", "multi-tenant", "async"
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -26,14 +26,17 @@ classifiers = [
     "License :: Other/Proprietary License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Framework :: Django",
-    "Framework :: Django :: 4.2",
-    "Framework :: Django :: 5.0",
+    "Framework :: AsyncIO",
+    "Framework :: FastAPI",
+    "Framework :: FastAPI :: 0.100",
+    "Framework :: FastAPI :: 0.101",
+    "Framework :: FastAPI :: 0.102",
+    "Framework :: FastAPI :: 0.103",
+    "Framework :: FastAPI :: 0.104",
+    "Framework :: FastAPI :: 0.105",
     "Topic :: Office/Business",
     "Topic :: Office/Business :: Financial :: Accounting",
     "Topic :: Office/Business :: Financial :: Point of Sale",
@@ -44,33 +47,39 @@ classifiers = [
     "Topic :: System :: Systems Administration",
     "Topic :: Text Processing :: Markup :: XML",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = [
-    "Django>=4.2.0,<5.1.0",
-    "psycopg2-binary>=2.9.0,<3.0.0",
-    "django-cors-headers>=4.3.0,<5.0.0",
-    "python-dateutil>=2.8.0,<3.0.0",
-    # "xmlrpc-client>=1.0.0",  # Built-in Python module, no need to install
+    "fastapi>=0.100.0,<1.0.0",
+    "uvicorn[standard]>=0.23.0,<1.0.0",
+    "pydantic>=2.0.0,<3.0.0",
+    "pydantic-settings>=2.0.0,<3.0.0",
+    "sqlalchemy[asyncio]>=2.0.0,<3.0.0",
+    "asyncpg>=0.29.0,<1.0.0",
+    "alembic>=1.12.0,<2.0.0",
+    "redis[hiredis]>=4.5.0,<6.0.0",
+    "cryptography>=41.0.0,<43.0.0",
+    "PyJWT>=2.8.0,<3.0.0",
+    "python-multipart>=0.0.6,<1.0.0",
+    "passlib[bcrypt]>=1.7.0,<2.0.0",
+    "httpx>=0.24.0,<1.0.0",
+    "aiohttp>=3.8.0,<4.0.0",
     "pandas>=1.5.0,<3.0.0",
     "numpy>=1.21.0,<2.0.0",
-    "redis>=4.5.0,<5.0.0",
-    "django-redis>=5.3.0,<6.0.0",
-    "cryptography>=41.0.0,<42.0.0",
-    "PyJWT>=2.8.0,<3.0.0",
     "Pillow>=9.5.0,<11.0.0",
     "python-magic>=0.4.27,<1.0.0",
     "python-dotenv>=1.0.0,<2.0.0",
     "requests>=2.31.0,<3.0.0",
     "urllib3>=1.26.0,<2.0.0",
-    "SQLAlchemy>=2.0.0,<3.0.0",
-    "structlog>=23.1.0,<24.0.0",
-    "sentry-sdk>=1.32.0,<2.0.0",
+    "structlog>=23.1.0,<25.0.0",
+    "sentry-sdk[fastapi]>=1.32.0,<3.0.0",
+    "aiosmtplib>=2.0.0,<4.0.0",
+    "email-validator>=2.0.0,<3.0.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.4.0,<8.0.0",
-    "pytest-django>=4.7.0,<5.0.0",
+    "pytest-asyncio>=0.21.0,<1.0.0",
     "pytest-cov>=4.1.0,<5.0.0",
     "pytest-mock>=3.11.0,<4.0.0",
     "pytest-xdist>=3.3.0,<4.0.0",
@@ -84,15 +93,13 @@ dev = [
     "responses>=0.23.0,<1.0.0",
     "freezegun>=1.2.0,<2.0.0",
     "httpx>=0.24.0,<1.0.0",
-    "django-test-plus>=1.4.0,<2.0.0",
     "locust>=2.15.0,<3.0.0",
     "bandit>=1.7.0,<2.0.0",
     "safety>=2.3.0,<2.4.0",
-    "pydocstyle>=6.3.0,<7.0.0",
 ]
 test = [
     "pytest>=7.4.0,<8.0.0",
-    "pytest-django>=4.7.0,<5.0.0",
+    "pytest-asyncio>=0.21.0,<1.0.0",
     "pytest-cov>=4.1.0,<5.0.0",
     "pytest-mock>=3.11.0,<4.0.0",
     "pytest-xdist>=3.3.0,<4.0.0",
@@ -113,22 +120,15 @@ Tracker = "https://github.com/kuriadn/fbs/issues"
 Changelog = "https://github.com/kuriadn/fbs/releases"
 
 [project.scripts]
-fbs-manage = "fbs_app.management.commands:main"
-
-[project.entry-points."django.apps"]
-fbs_app = "fbs_app.apps.FBSAppConfig"
-fbs_dms = "fbs_dms.apps.FBSDMSConfig"
-fbs_license_manager = "fbs_license_manager.apps.FBSLicenseManagerConfig"
+fbs-api = "fbs_fastapi.main:app"
 
 [tool.setuptools]
-packages = ["fbs_app", "fbs_dms", "fbs_license_manager"]
+packages = ["fbs_fastapi"]
 include-package-data = true
 zip-safe = false
 
 [tool.setuptools.package-data]
-fbs_app = ["**/*.json", "**/*.yaml", "**/*.yml", "**/*.xml", "**/*.html", "**/*.css", "**/*.js"]
-fbs_dms = ["**/*.json", "**/*.yaml", "**/*.yml", "**/*.xml", "**/*.html", "**/*.css", "**/*.js"]
-fbs_license_manager = ["**/*.json", "**/*.yaml", "**/*.yml", "**/*.xml", "**/*.html", "**/*.css", "**/*.js"]
+fbs_fastapi = ["**/*.json", "**/*.yaml", "**/*.yml", "**/*.xml", "**/*.html", "**/*.css", "**/*.js", "**/*.md"]
 
 [tool.black]
 line-length = 88
@@ -154,10 +154,9 @@ extend-exclude = '''
 profile = "black"
 multi_line_output = 3
 line_length = 88
-known_first_party = ["fbs_app", "fbs_dms", "fbs_license_manager"]
+known_first_party = ["fbs_fastapi"]
 
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "fbs_project.settings"
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -165,9 +164,8 @@ addopts = [
     "--tb=short",
     "--strict-markers",
     "--strict-config",
-    "--cov=fbs_app",
-    "--cov=fbs_dms", 
-    "--cov=fbs_license_manager",
+    "--asyncio-mode=auto",
+    "--cov=fbs_fastapi",
     "--cov-report=term-missing",
     "--cov-report=html",
 ]
@@ -177,22 +175,17 @@ markers = [
     "performance: Performance tests",
     "security: Security tests",
     "slow: Slow running tests",
+    "asyncio: Async tests",
 ]
-testpaths = ["tests", "fbs_app/tests", "fbs_dms/tests", "fbs_license_manager/tests"]
+testpaths = ["tests", "fbs_fastapi/tests"]
 
 [tool.coverage.run]
-source = ["fbs_app", "fbs_dms", "fbs_license_manager"]
+source = ["fbs_fastapi"]
 omit = [
     "*/tests/*",
     "*/migrations/*",
-    "*/management/commands/*",
-    "*/admin.py",
-    "*/apps.py",
-    "*/urls.py",
-    "*/wsgi.py",
-    "*/asgi.py",
-    "*/settings.py",
     "*/__init__.py",
+    "**/alembic/**",
 ]
 
 [tool.coverage.report]
