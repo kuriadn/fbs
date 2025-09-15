@@ -15,6 +15,48 @@
 
 **FBS is designed as a modern business platform** - providing both standalone capabilities and seamless Odoo integration through automated module generation. When deployed, it serves as a powerful foundation for custom business solutions with **automated Odoo module creation and deployment**.
 
+## 📚 Documentation
+
+### 🚀 Quick Start
+- **[Embeddable Framework Guide](./docs/README_EMBEDDABLE.md)** - Complete overview and getting started
+- **[Implementation Guide](./docs/FBS_FASTAPI_EMBEDDABLE_GUIDE.md)** - Detailed implementation instructions
+- **[Working Examples](./docs/FBS_IMPLEMENTATION_EXAMPLE.py)** - Code examples and patterns
+- **[Docker Integration](./docs/DOCKER_INTEGRATION_EXAMPLE.py)** - Production deployment patterns
+
+### 📖 What You Need to Know
+1. **FBS is an embeddable framework** - Import it into your FastAPI applications
+2. **Multi-tenant architecture** - Isolated databases per solution
+3. **Odoo integration** - Automated module generation and ERP connectivity
+4. **Production ready** - Docker deployment with host services architecture
+
+### 💡 Quick Usage Example
+
+```python
+from fastapi import FastAPI
+from fbs_fastapi.services.service_interfaces import FBSInterface
+
+app = FastAPI(title="My Business Solution")
+fbs = FBSInterface(solution_name="my_business")
+
+@app.get("/dashboard")
+async def get_dashboard():
+    """Get business dashboard using FBS MSME service"""
+    return await fbs.msme.get_dashboard()
+
+@app.post("/create-business")
+async def create_business(business_data: dict):
+    """Create new business using FBS services"""
+    return await fbs.msme.setup_business(
+        business_type="retail",
+        config=business_data
+    )
+
+@app.get("/odoo-models")
+async def get_odoo_models():
+    """Discover Odoo models using FBS discovery service"""
+    return await fbs.discovery.discover_models("my_business")
+```
+
 ## 🗄️ **Database Architecture**
 
 **FBS FastAPI v3.1.0 uses a hybrid deployment model:**

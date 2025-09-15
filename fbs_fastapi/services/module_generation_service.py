@@ -46,6 +46,8 @@ class ModuleSpec:
     views: Optional[List[Dict[str, Any]]] = None
     security: Optional[Dict[str, Any]] = None
     tenant_id: Optional[str] = None
+    # RESTORED: Inheritance support from original mod_gen
+    inherit_from: Optional[str] = None  # e.g., "res.partner", "sale.order"
 
     def __post_init__(self):
         if self.depends is None:
@@ -65,12 +67,14 @@ class FBSModuleGeneratorEngine:
     FBS-adapted module generation engine
 
     Integrates with FBS services while maintaining module generation capabilities.
+    Now supports Discovery-informed generation for hybrid workflows.
     """
 
-    def __init__(self, odoo_service: OdooService, license_service: LicenseService, dms_service: DMSService):
+    def __init__(self, odoo_service: OdooService, license_service: LicenseService, dms_service: DMSService, discovery_service=None):
         self.odoo_service = odoo_service
         self.license_service = license_service
         self.dms_service = dms_service
+        self.discovery_service = discovery_service  # NEW: Integration with Discovery
         self.templates_dir = Path(config.module_generator_template_dir)
 
     async def generate_module(self, spec: ModuleSpec, user_id: str, tenant_id: str) -> Dict[str, Any]:
@@ -146,6 +150,75 @@ class FBSModuleGeneratorEngine:
             'installation': install_result
         }
 
+    async def generate_from_discovery(self, discovery_findings: Dict[str, Any], user_id: str, tenant_id: str) -> Dict[str, Any]:
+        """
+        Generate modules based on Discovery Service findings
+        This creates the integration between Discovery and Module Generation
+
+        Args:
+            discovery_findings: Results from Discovery Service
+            user_id: User requesting generation
+            tenant_id: Tenant context
+
+        Returns:
+            Generation result based on discovered structures
+        """
+        if not self.discovery_service:
+            raise ValueError("Discovery service not available for integration")
+
+        # Convert discovery findings to module specifications
+        module_specs = await self._convert_discovery_to_specs(discovery_findings, tenant_id)
+
+        results = []
+        for spec in module_specs:
+            result = await self.generate_module(spec, user_id, tenant_id)
+            results.append(result)
+
+        return {
+            'success': True,
+            'message': f'Generated {len(results)} modules from discovery findings',
+            'modules': results,
+            'integration_type': 'discovery_to_generation'
+        }
+
+    async def _convert_discovery_to_specs(self, discovery_findings: Dict[str, Any], tenant_id: str) -> List[ModuleSpec]:
+        """
+        Convert Discovery findings into ModuleSpec objects for generation
+        """
+        specs = []
+
+        # Process discovered models
+        if 'models' in discovery_findings.get('data', {}):
+            for model in discovery_findings['data']['models']:
+                model_name = model.get('model', '')
+                if model_name:
+                    # Create extension module for discovered model
+                    spec = ModuleSpec(
+                        name=f"{model_name.replace('.', '_')}_extension",
+                        description=f"Extension for discovered model {model_name}",
+                        author="FBS Discovery Integration",
+                        models=[{
+                            'name': f"{model_name}.extension",
+                            'inherit_from': model_name,  # Inherit from discovered model
+                            'description': f"Extension of {model_name}",
+                            'fields': [
+                                {'name': 'custom_notes', 'type': 'text', 'string': 'Custom Notes'},
+                                {'name': 'extension_data', 'type': 'json', 'string': 'Extension Data'}
+                            ]
+                        }],
+                        security={
+                            'rules': [{
+                                'name': f'{model_name} Extension Access',
+                                'model': f"{model_name}.extension",
+                                'permissions': ['read', 'write', 'create']
+                            }]
+                        },
+                        tenant_id=tenant_id
+                    )
+                    specs.append(spec)
+
+        return specs
+
     async def _generate_files(self, spec: ModuleSpec) -> Dict[str, str]:
         """Generate all module files"""
         files = {}
@@ -175,7 +248,21 @@ class FBSModuleGeneratorEngine:
         return files
 
     def _generate_manifest(self, spec: ModuleSpec) -> str:
-        """Generate __manifest__.py"""
+        """Generate __manifest__.py with conditional data files"""
+        data_files = []
+
+        # Only include security if it exists
+        if spec.security:
+            data_files.append('security/ir.model.access.csv')
+
+        # Only include views if they're being generated
+        if spec.views:
+            data_files.append('views/views.xml')
+
+        # Only include workflows if they exist
+        if spec.workflows:
+            data_files.append('workflows/workflow.xml')
+
         return f'''{{
     'name': '{spec.name.replace("_", " ").title()}',
     'version': '{spec.version}',
@@ -183,10 +270,7 @@ class FBSModuleGeneratorEngine:
     'author': '{spec.author}',
     'category': '{spec.category}',
     'depends': {spec.depends},
-    'data': [
-        'security/ir.model.access.csv',
-        'views/views.xml',
-    ],
+    'data': {data_files},
     'installable': True,
     'auto_install': False,
     'application': False,
@@ -206,19 +290,24 @@ class FBSModuleGeneratorEngine:
         return files
 
     def _generate_model_class(self, model_spec: Dict[str, Any]) -> str:
-        """Generate a single model class"""
+        """Generate a single model class with inheritance support"""
         model_name = model_spec['name']
         class_name = ''.join(word.capitalize() for word in model_name.split('.'))
 
         fields_code = self._generate_fields(model_spec.get('fields', []))
         methods_code = self._generate_methods(model_spec.get('methods', []))
 
+        # RESTORED: Inheritance support from original mod_gen
+        inherit_code = ""
+        if model_spec.get('inherit_from'):
+            inherit_code = f"    _inherit = '{model_spec['inherit_from']}'"
+
         return f'''from odoo import models, fields, api
 from odoo.exceptions import ValidationError
 
 
 class {class_name}(models.Model):
-    _name = '{model_name}'
+    _name = '{model_name}'{inherit_code}
     _description = '{model_spec.get("description", model_name)}'
 
     {fields_code}
@@ -366,11 +455,11 @@ class {class_name}(models.Model):
         return activity_record
 
     def _generate_views(self, spec: ModuleSpec) -> Dict[str, str]:
-        """Generate view files"""
+        """Generate view files only if views are specified"""
         files = {}
 
-        # Generate basic form and tree views
-        if spec.models:
+        # Only generate views if explicitly requested
+        if spec.views and spec.models:
             for model in spec.models:
                 model_name = model['name']
                 files[f"views/{model_name.replace('.', '_')}_views.xml"] = self._generate_model_views(model)

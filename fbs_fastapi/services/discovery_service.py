@@ -25,7 +25,7 @@ class DiscoveryService(BaseService, AsyncServiceMixin):
             from .odoo_service import OdooService
             odoo_service = OdooService(self.solution_name)
 
-            db_name = database_name or f"{self.solution_name}_db"
+            db_name = database_name or f"fbs_{self.solution_name}_db"
             if not db_name:
                 return {
                     'success': False,
@@ -69,7 +69,7 @@ class DiscoveryService(BaseService, AsyncServiceMixin):
             from .odoo_service import OdooService
             odoo_service = OdooService(self.solution_name)
 
-            db_name = database_name or f"{self.solution_name}_db"
+            db_name = database_name or f"fbs_{self.solution_name}_db"
             if not db_name:
                 return {
                     'success': False,
@@ -113,7 +113,7 @@ class DiscoveryService(BaseService, AsyncServiceMixin):
             from .odoo_service import OdooService
             odoo_service = OdooService(self.solution_name)
 
-            db_name = database_name or f"{self.solution_name}_db"
+            db_name = database_name or f"fbs_{self.solution_name}_db"
             if not db_name:
                 return {
                     'success': False,
@@ -152,7 +152,7 @@ class DiscoveryService(BaseService, AsyncServiceMixin):
             from .odoo_service import OdooService
             odoo_service = OdooService(self.solution_name)
 
-            db_name = database_name or f"{self.solution_name}_db"
+            db_name = database_name or f"fbs_{self.solution_name}_db"
             if not db_name:
                 return {
                     'success': False,
@@ -210,7 +210,7 @@ class DiscoveryService(BaseService, AsyncServiceMixin):
             from .odoo_service import OdooService
             odoo_service = OdooService(self.solution_name)
 
-            db_name = database_name or f"{self.solution_name}_db"
+            db_name = database_name or f"fbs_{self.solution_name}_db"
             if not db_name:
                 return {
                     'success': False,
@@ -268,7 +268,7 @@ class DiscoveryService(BaseService, AsyncServiceMixin):
             from .odoo_service import OdooService
             odoo_service = OdooService(self.solution_name)
 
-            db_name = database_name or f"{self.solution_name}_db"
+            db_name = database_name or f"fbs_{self.solution_name}_db"
             if not db_name:
                 return {
                     'success': False,
@@ -320,7 +320,7 @@ class DiscoveryService(BaseService, AsyncServiceMixin):
             from .odoo_service import OdooService
             odoo_service = OdooService(self.solution_name)
 
-            db_name = database_name or f"{self.solution_name}_db"
+            db_name = database_name or f"fbs_{self.solution_name}_db"
             if not db_name:
                 return {
                     'success': False,

@@ -526,6 +526,7 @@ class FBSInterface:
         self._virtual_fields: Optional[VirtualFieldsInterfaceProtocol] = None
         self._odoo: Optional[OdooInterfaceProtocol] = None
         self._notifications: Optional[NotificationInterfaceProtocol] = None
+        self._module_gen = None  # NEW: Module Generation Service
         self._cache = None
 
     @property
@@ -662,6 +663,20 @@ class FBSInterface:
             self._cache = CacheService(self.solution_name)
         return self._cache
 
+    @property
+    def module_gen(self):
+        """Get Module Generation service interface with Discovery integration"""
+        if self._module_gen is None:
+            from .module_generation_service import FBSModuleGeneratorEngine
+            # Initialize with Discovery integration
+            self._module_gen = FBSModuleGeneratorEngine(
+                odoo_service=self.odoo,
+                license_service=None,  # Can be added later
+                dms_service=None,      # Can be added later
+                discovery_service=self.discovery  # ← INTEGRATION!
+            )
+        return self._module_gen
+
     async def get_solution_info(self) -> Dict[str, Any]:
         """Get solution information - PRESERVED from Django"""
         info = {
@@ -677,6 +692,9 @@ class FBSInterface:
                 'onboarding': 'Client onboarding',
                 'odoo': 'Odoo ERP integration',
                 'fields': 'Virtual fields & custom data',
+                'discovery': 'Odoo model discovery',
+                'module_gen': 'Automated module generation',
+                'integrated_workflows': 'Discovery + Generation workflows',
                 'cache': 'Cache management'
             }
         }
@@ -716,9 +734,188 @@ class FBSInterface:
                 'onboarding': 'operational',
                 'odoo': 'operational',
                 'fields': 'operational',
+                'module_gen': 'operational',  # NEW
+                'discovery': 'operational',   # NEW
                 'cache': 'operational'
             }
         }
+
+    # ============================================================================
+    # INTEGRATED WORKFLOWS: Discovery + Module Generation
+    # ============================================================================
+
+    async def discover_and_extend(self, user_id: str, tenant_id: str = None) -> Dict[str, Any]:
+        """
+        INTEGRATED WORKFLOW: Discover existing structures and generate extensions
+
+        This combines Discovery and Module Generation into a unified workflow:
+        1. Discover existing Odoo models and fields
+        2. Generate extension modules based on findings
+        3. Install extensions in the solution database
+
+        Args:
+            user_id: User performing the operation
+            tenant_id: Target tenant (defaults to solution_name)
+
+        Returns:
+            Complete workflow result
+        """
+        tenant_id = tenant_id or self.solution_name
+
+        workflow_result = {
+            'workflow_type': 'discover_and_extend',
+            'tenant_id': tenant_id,
+            'phases': {},
+            'timestamp': datetime.now().isoformat()
+        }
+
+        try:
+            # Phase 1: Discovery
+            workflow_result['phases']['discovery'] = {
+                'status': 'running',
+                'message': 'Discovering existing Odoo structures'
+            }
+
+            discovery_result = await self.discovery.discover_models(self.odoo_db_name)
+            workflow_result['phases']['discovery'] = {
+                'status': 'completed',
+                'result': discovery_result
+            }
+
+            # Phase 2: Module Generation from Discovery
+            workflow_result['phases']['generation'] = {
+                'status': 'running',
+                'message': 'Generating extension modules from discovery findings'
+            }
+
+            generation_result = await self.module_gen.generate_from_discovery(
+                discovery_result, user_id, tenant_id
+            )
+            workflow_result['phases']['generation'] = {
+                'status': 'completed',
+                'result': generation_result
+            }
+
+            # Phase 3: Installation
+            workflow_result['phases']['installation'] = {
+                'status': 'running',
+                'message': 'Installing generated modules'
+            }
+
+            install_results = []
+            for module in generation_result.get('modules', []):
+                if 'zip_content' in module:
+                    install_result = await self.module_gen.generate_and_install(
+                        ModuleSpec(name=module['module_name']), user_id, tenant_id
+                    )
+                    install_results.append(install_result)
+
+            workflow_result['phases']['installation'] = {
+                'status': 'completed',
+                'results': install_results
+            }
+
+            workflow_result['overall_status'] = 'success'
+            workflow_result['message'] = f'Successfully completed integrated workflow for {tenant_id}'
+
+        except Exception as e:
+            workflow_result['overall_status'] = 'failed'
+            workflow_result['error'] = str(e)
+            workflow_result['message'] = f'Integrated workflow failed: {str(e)}'
+
+        return workflow_result
+
+    async def hybrid_extension_workflow(self, base_model: str, custom_fields: List[Dict], user_id: str, tenant_id: str = None) -> Dict[str, Any]:
+        """
+        HYBRID WORKFLOW: Combine virtual fields (immediate) + module generation (structured)
+
+        This provides both approaches in one workflow:
+        1. Immediate virtual field extensions for rapid development
+        2. Structured module generation for production-ready extensions
+
+        Args:
+            base_model: Odoo model to extend (e.g., 'res.partner')
+            custom_fields: List of custom fields to add
+            user_id: User performing the operation
+            tenant_id: Target tenant
+
+        Returns:
+            Hybrid workflow result
+        """
+        tenant_id = tenant_id or self.solution_name
+
+        result = {
+            'workflow_type': 'hybrid_extension',
+            'base_model': base_model,
+            'tenant_id': tenant_id,
+            'phases': {},
+            'timestamp': datetime.now().isoformat()
+        }
+
+        try:
+            # Phase 1: Virtual Fields (Immediate)
+            result['phases']['virtual_fields'] = {
+                'status': 'running',
+                'message': f'Adding virtual fields to {base_model}'
+            }
+
+            virtual_results = []
+            for field in custom_fields:
+                field_result = await self.fields.set_custom_field(
+                    base_model, 0, field['name'], field.get('default', ''),
+                    field.get('type', 'char'), self.fastapi_db_name
+                )
+                virtual_results.append(field_result)
+
+            result['phases']['virtual_fields'] = {
+                'status': 'completed',
+                'results': virtual_results
+            }
+
+            # Phase 2: Module Generation (Structured)
+            result['phases']['module_generation'] = {
+                'status': 'running',
+                'message': f'Generating structured module for {base_model}'
+            }
+
+            module_spec = ModuleSpec(
+                name=f"{base_model.replace('.', '_')}_structured_extension",
+                description=f"Structured extension for {base_model}",
+                author="FBS Hybrid Workflow",
+                models=[{
+                    'name': f"{base_model}.structured",
+                    'inherit_from': base_model,
+                    'description': f"Structured extension of {base_model}",
+                    'fields': custom_fields
+                }],
+                security={
+                    'rules': [{
+                        'name': f'{base_model} Extension Access',
+                        'model': f"{base_model}.structured",
+                        'permissions': ['read', 'write', 'create']
+                    }]
+                },
+                tenant_id=tenant_id
+            )
+
+            generation_result = await self.module_gen.generate_module(
+                module_spec, user_id, tenant_id
+            )
+
+            result['phases']['module_generation'] = {
+                'status': 'completed',
+                'result': generation_result
+            }
+
+            result['overall_status'] = 'success'
+            result['message'] = f'Hybrid extension completed for {base_model}'
+
+        except Exception as e:
+            result['overall_status'] = 'failed'
+            result['error'] = str(e)
+            result['message'] = f'Hybrid workflow failed: {str(e)}'
+
+        return result
 
 # ============================================================================
 # SERVICE IMPLEMENTATION BASE CLASSES

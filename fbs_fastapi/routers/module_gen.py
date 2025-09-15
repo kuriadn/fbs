@@ -37,6 +37,7 @@ class ModuleFieldSpec(BaseModel):
 class ModuleModelSpec(BaseModel):
     name: str = Field(..., description="Model name (e.g., 'my.module')")
     description: Optional[str] = Field(None, description="Model description")
+    inherit_from: Optional[str] = Field(None, description="Inherit from existing Odoo model (e.g., 'res.partner')")
     fields: List[ModuleFieldSpec] = Field(default_factory=list, description="Model fields")
     methods: Optional[List[Dict[str, Any]]] = Field(default_factory=list, description="Custom methods")
 
@@ -67,7 +68,7 @@ class ModuleSpec(BaseModel):
     depends: Optional[List[str]] = Field(default_factory=lambda: ["base"], description="Module dependencies")
     models: Optional[List[ModuleModelSpec]] = Field(default_factory=list, description="Module models")
     workflows: Optional[List[ModuleWorkflowSpec]] = Field(default_factory=list, description="Module workflows")
-    views: Optional[List[ModuleViewSpec]] = Field(default_factory=list, description="Module views")
+    views: Optional[List[ModuleViewSpec]] = Field(None, description="Module views (optional - omit for pure backend modules)")
     security: Optional[ModuleSecuritySpec] = Field(None, description="Module security configuration")
 
 

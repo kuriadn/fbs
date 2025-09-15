@@ -167,7 +167,7 @@ async def generate_module(
     """
     Generate Odoo module using embedded FBS module generator
 
-    Demonstrates v3.0.0 flagship feature
+    Demonstrates v3.1.0 flagship feature
     """
     try:
         # Direct FBS method call (no HTTP!)
@@ -177,7 +177,7 @@ async def generate_module(
             "success": True,
             "module": result,
             "integration_method": "direct_embeddable",
-            "fbs_version": "3.0.0"
+            "fbs_version": "3.1.0"
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-FBS FastAPI v3.0.0 Version Verification Script
+FBS FastAPI v3.1.0 Version Verification Script
 
-This script verifies that FBS FastAPI is correctly reporting version 3.0.0
+This script verifies that FBS FastAPI is correctly reporting version 3.1.0
 and that all key components are properly configured.
 """
 
@@ -12,7 +12,7 @@ from pathlib import Path
 
 def verify_version():
     """Verify FBS version and configuration."""
-    print("🔍 FBS FastAPI v3.0.0 - Version Verification")
+    print("🔍 FBS FastAPI v3.1.0 - Version Verification")
     print("=" * 60)
 
     # Add project root to path
@@ -30,12 +30,12 @@ def verify_version():
         print(f"✅ App Name: {config.app_name}")
         print(f"✅ Version: {version}")
 
-        if version == "3.0.0":
+        if version == "3.1.0":
             print("🎉 FBS VERSION VERIFICATION: PASSED")
-            print("   FBS FastAPI is correctly reporting version 3.0.0")
+            print("   FBS FastAPI is correctly reporting version 3.1.0")
         else:
             print(f"❌ FBS VERSION VERIFICATION: FAILED")
-            print(f"   Expected version: 3.0.0, Found version: {version}")
+            print(f"   Expected version: 3.1.0, Found version: {version}")
             return False
 
         # Check key features
