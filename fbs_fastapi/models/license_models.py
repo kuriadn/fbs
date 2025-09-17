@@ -63,7 +63,7 @@ class SolutionLicense(Base):
     enable_licensing = Column(Boolean, default=True, nullable=False)
 
     # Metadata
-    metadata = Column(JSON, default=dict, nullable=False)
+    extra_metadata = Column(JSON, default=dict, nullable=False)
     notes = Column(Text, nullable=True)
 
     # Audit fields
@@ -152,7 +152,7 @@ class FeatureUsage(Base):
     status = Column(Enum(FeatureUsageStatus), default=FeatureUsageStatus.ACTIVE, nullable=False)
 
     # Metadata
-    metadata = Column(JSON, default=dict, nullable=False)
+    extra_metadata = Column(JSON, default=dict, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
@@ -189,7 +189,7 @@ class LicenseAuditLog(Base):
     performed_by = Column(String(100), nullable=True)  # user ID or system
     ip_address = Column(String(45), nullable=True)  # IPv4/IPv6
     user_agent = Column(String(500), nullable=True)
-    metadata = Column(JSON, default=dict, nullable=False)
+    extra_metadata = Column(JSON, default=dict, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     def __repr__(self):

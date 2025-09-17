@@ -1,4 +1,4 @@
-# FBS FastAPI v3.0.0 Dockerfile
+# FBS FastAPI v3.1.1 Dockerfile
 FROM python:3.11-slim
 
 # Set environment variables

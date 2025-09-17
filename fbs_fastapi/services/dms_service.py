@@ -14,7 +14,7 @@ from pathlib import Path
 from sqlalchemy import and_, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..core.base_service import BaseService, AsyncServiceMixin
+from .service_interfaces import BaseService, AsyncServiceMixin
 from ..models.dms_models import (
     DMSDocument, DMSDocumentType, DMSDocumentCategory, DMSDocumentTag,
     DMSFileAttachment, DMSDocumentWorkflow, DMSDocumentApproval,
@@ -29,6 +29,15 @@ class DocumentService(BaseService, AsyncServiceMixin):
         super().__init__(solution_name)
         self.upload_path = Path("uploads") / solution_name / "dms"
         self.upload_path.mkdir(parents=True, exist_ok=True)
+
+    async def health_check(self) -> Dict[str, Any]:
+        """DMS service health check"""
+        return {
+            "status": "healthy",
+            "service": "DocumentService",
+            "solution_name": self.solution_name,
+            "upload_path_exists": self.upload_path.exists()
+        }
 
     async def create_document(
         self,

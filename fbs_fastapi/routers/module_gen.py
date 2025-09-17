@@ -11,14 +11,28 @@ from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks
 from pydantic import BaseModel, Field
 from datetime import datetime
 
-from core.dependencies import get_current_user, get_db_session_for_request
-from services.module_generation_service import module_generation_service
-from core.config import config
+from ..core.dependencies import get_current_user, get_db_session_for_request
+from ..services.module_generation_service import FBSModuleGeneratorEngine
+from ..core.config import config
 
 logger = logging.getLogger(__name__)
 
 # Create router
 router = APIRouter(prefix="/api/module-gen", tags=["Module Generation"])
+
+def get_module_generator(solution_name: str) -> FBSModuleGeneratorEngine:
+    """Get module generator instance for solution"""
+    from ..services.odoo_service import OdooService
+    from ..services.license_service import LicenseService
+    from ..services.dms_service import DocumentService as DMSService
+    from ..services.discovery_service import DiscoveryService
+
+    odoo_service = OdooService(solution_name)
+    license_service = LicenseService(solution_name)
+    dms_service = DMSService(solution_name)
+    discovery_service = DiscoveryService(solution_name)
+
+    return FBSModuleGeneratorEngine(odoo_service, license_service, dms_service, discovery_service)
 
 
 # Pydantic models for request/response
@@ -119,7 +133,9 @@ async def list_templates(
     """
     try:
         tenant_id = current_user.get('tenant_id', 'default')
-        templates = await module_generation_service.list_templates(tenant_id)
+        solution_name = current_user.get('solution_name', 'default')
+        generator = get_module_generator(solution_name)
+        templates = await generator.list_templates(tenant_id)
 
         return [
             ModuleTemplateResponse(
@@ -150,7 +166,9 @@ async def validate_specification(
     """
     try:
         spec_dict = spec.dict()
-        result = await module_generation_service.validate_specification(spec_dict)
+        solution_name = current_user.get('solution_name', 'default')
+        generator = get_module_generator(solution_name)
+        result = await generator.validate_specification(spec_dict)
 
         return ValidationResponse(**result)
 
@@ -176,10 +194,12 @@ async def validate_installation_request(
             raise HTTPException(403, "Module generation is not enabled")
 
         tenant_id = current_user.get('tenant_id', 'default')
+        solution_name = current_user.get('solution_name', 'default')
 
         # Validate specification first
         spec_dict = spec.dict()
-        validation_result = await module_generation_service.validate_specification(spec_dict)
+        generator = get_module_generator(solution_name)
+        validation_result = await generator.validate_specification(spec_dict)
 
         if not validation_result['valid']:
             return ValidationResponse(**validation_result)
@@ -230,7 +250,7 @@ async def generate_module(
         tenant_id = current_user.get('tenant_id', 'default')
 
         spec_dict = spec.dict()
-        result = await module_generation_service.generate_module(spec_dict, user_id, tenant_id)
+        result = await generator.generate_module(spec_dict, user_id, tenant_id)
 
         # Log the generation activity
         background_tasks.add_task(
@@ -282,7 +302,7 @@ async def generate_and_install_module(
         tenant_id = current_user.get('tenant_id', 'default')
 
         spec_dict = spec.dict()
-        result = await module_generation_service.generate_and_install(spec_dict, user_id, tenant_id)
+        result = await generator.generate_and_install(spec_dict, user_id, tenant_id)
 
         # Log the generation and installation activity
         background_tasks.add_task(
@@ -326,7 +346,7 @@ async def list_generated_modules(
         tenant_id = current_user.get('tenant_id', 'default')
 
         async for db in get_db_session_for_request(None):
-            from models.models import GeneratedModule
+            from ..models.models import GeneratedModule
 
             query = db.query(GeneratedModule).filter(GeneratedModule.tenant_id == tenant_id)
             total = query.count()
@@ -372,7 +392,7 @@ async def get_generation_history(
         tenant_id = current_user.get('tenant_id', 'default')
 
         async for db in get_db_session_for_request(None):
-            from models.models import ModuleGenerationHistory
+            from ..models.models import ModuleGenerationHistory
 
             query = db.query(ModuleGenerationHistory).filter(ModuleGenerationHistory.tenant_id == tenant_id)
             total = query.count()
@@ -412,7 +432,7 @@ async def _log_module_generation_activity(
     """Log module generation activity asynchronously"""
     try:
         async for db in get_db_session_for_request(None):
-            from models.models import ModuleGenerationHistory
+            from ..models.models import ModuleGenerationHistory
 
             log_entry = ModuleGenerationHistory(
                 module_name=module_name,

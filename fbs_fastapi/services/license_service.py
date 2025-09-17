@@ -13,7 +13,7 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-from ..core.base_service import BaseService, AsyncServiceMixin
+from .service_interfaces import BaseService, AsyncServiceMixin
 from ..models.license_models import (
     SolutionLicense, FeatureUsage, LicenseAuditLog, UpgradeRecommendation,
     LicenseType, LicenseStatus, FeatureUsageStatus
@@ -31,8 +31,8 @@ class LicenseService(BaseService, AsyncServiceMixin):
         self._features = None
         self._encryption_key = None
 
-        # Load license data
-        self._load_license_data()
+        # Initialize with default trial license
+        self._license_data = self._generate_license_data('trial')
 
     def _get_default_license(self) -> str:
         """Get default license from environment or generate trial"""
@@ -112,7 +112,7 @@ class LicenseService(BaseService, AsyncServiceMixin):
                 'storage_gb': 25.0
             }
         elif license_type == 'enterprise':
-            features = ['msme', 'bi', 'workflows', 'compliance', 'accounting', 'dms', 'licensing']
+            features = ['msme', 'bi', 'workflows', 'compliance', 'accounting', 'dms', 'licensing', 'discovery']
             limits = {
                 'msme_businesses': -1,  # Unlimited
                 'workflows': -1,

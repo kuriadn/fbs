@@ -16,12 +16,12 @@ from io import BytesIO
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 
-from core.config import config
-from core.dependencies import get_db_session_for_request
-from services.odoo_service import OdooService
-from services.license_service import LicenseService
-from services.dms_service import DMSService
-from models.models import ModuleGenerationHistory, GeneratedModule, ModuleTemplate
+from ..core.config import config
+from ..core.dependencies import get_db_session_for_request
+from .odoo_service import OdooService
+from .license_service import LicenseService
+from .dms_service import DocumentService as DMSService
+from ..models.models import ModuleGenerationHistory, GeneratedModule, ModuleTemplate
 
 # Template system imports
 from jinja2 import Environment, FileSystemLoader, Template

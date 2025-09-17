@@ -7,5 +7,5 @@ Modernized version of the Django FBS application.
 
 from .main import app
 
-__version__ = "3.1.0"
+__version__ = "3.1.1"
 __all__ = ["app"]

@@ -18,7 +18,7 @@ from .onboarding_service import OnboardingService
 from .database_service import DatabaseService
 from .auth_service import AuthService
 from .discovery_service import DiscoveryService
-from .dms_service import DMSService
+from .dms_service import DocumentService as DMSService
 from .field_merger_service import FieldMergerService
 from .license_manager import LicenseManager
 from .license_service import LicenseService

@@ -225,7 +225,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 # Include FBS v3 business routes
 try:
-    from routers.business import router as business_router
+    from .routers.business import router as business_router
     app.include_router(business_router, prefix="/api/business", tags=["Business Management"])
     logger.info("✅ Business routes loaded")
 except ImportError as e:
@@ -234,7 +234,7 @@ except ImportError as e:
 # Include DMS routes
 if config.enable_dms_features:
     try:
-        from routers.dms import router as dms_router
+        from .routers.dms import router as dms_router
         app.include_router(dms_router, prefix="/api/dms", tags=["Document Management"])
         logger.info("✅ DMS routes loaded")
     except ImportError as e:
@@ -243,7 +243,7 @@ if config.enable_dms_features:
 # Include licensing routes
 if config.enable_licensing_features:
     try:
-        from routers.license import router as license_router
+        from .routers.license import router as license_router
         app.include_router(license_router, prefix="/api/license", tags=["License Management"])
         logger.info("✅ License routes loaded")
     except ImportError as e:
@@ -252,7 +252,7 @@ if config.enable_licensing_features:
 # Include module generation routes
 if config.enable_module_generation:
     try:
-        from routers.module_gen import router as module_gen_router
+        from .routers.module_gen import router as module_gen_router
         app.include_router(module_gen_router, prefix="", tags=["Module Generation"])
         logger.info("✅ Module generation routes loaded")
     except ImportError as e:

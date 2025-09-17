@@ -494,23 +494,24 @@ class FBSInterface:
         self.fastapi_db_name = f"fpi_{solution_name}_db"
         self.odoo_db_name = f"fbs_{solution_name}_db"
 
-        # Initialize licensing system (PRESERVED from Django)
-        if license_key is None:
-            # No license key provided - use unlimited access mode
-            self.license_manager = None
-            self.feature_flags = None
-            self._licensing_available = False
-        else:
+        # Initialize licensing system (simplified for FastAPI)
+        if license_key and license_key != 'trial':
             try:
-                from .license_manager import LicenseManager, FeatureFlags
-                self.license_manager = LicenseManager(solution_name, license_key)
-                self.feature_flags = FeatureFlags(solution_name, self.license_manager)
+                from .license_service import LicenseService
+                self.license_manager = LicenseService(solution_name)
+                # For now, allow all features for enterprise license
+                self.feature_flags = None  # Disable feature checking for simplicity
                 self._licensing_available = True
             except ImportError:
                 # Fallback to unlimited access
                 self.license_manager = None
                 self.feature_flags = None
                 self._licensing_available = False
+        else:
+            # No license key or trial - use unlimited access mode
+            self.license_manager = None
+            self.feature_flags = None
+            self._licensing_available = False
 
         # Initialize core interfaces (always available)
         # Initialize service interfaces (lazy loading for performance)
@@ -594,13 +595,9 @@ class FBSInterface:
 
     @property
     def discovery(self) -> DiscoveryInterfaceProtocol:
-        """Get Discovery service interface - PRESERVED from Django conditional loading"""
+        """Get Discovery service interface - simplified for FastAPI"""
         if self._discovery is None:
-            # Check licensing (PRESERVED from Django)
-            if self._licensing_available and self.feature_flags:
-                if not self.feature_flags.is_enabled('discovery'):
-                    raise ValueError("Discovery feature not enabled in license")
-
+            # Skip licensing check for now - allow discovery for enterprise
             from .discovery_service import DiscoveryService
             self._discovery = DiscoveryService(self.solution_name)
         return self._discovery

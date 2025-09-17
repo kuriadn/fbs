@@ -1,12 +1,12 @@
-# FBS FastAPI v3.1.0 - Fayvad Business Suite
+# FBS FastAPI v3.1.1 - Fayvad Business Suite
 
-[![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)](https://github.com/kuriadn/fbs)
+[![Version](https://img.shields.io/badge/version-3.1.1-blue.svg)](https://github.com/kuriadn/fbs)
 [![Docker](https://img.shields.io/badge/docker-v2+-blue.svg)](https://docs.docker.com/compose/compose-file/compose-versioning/)
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115.6-green.svg)](https://fastapi.tiangolo.com)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-**FBS FastAPI v3.0.0** is a modern, production-ready business suite built with FastAPI, featuring revolutionary module generation capabilities for Odoo integration.
+**FBS FastAPI v3.1.1** is a modern, production-ready business suite built with FastAPI, featuring revolutionary module generation capabilities for Odoo integration.
 
 ## 🚀 Key Features
 
@@ -354,7 +354,7 @@ pytest tests/unit/test_module_generation.py -v
 ```bash
 # Application
 APP_NAME="FBS - Fayvad Business Suite"
-APP_VERSION="3.0.0"
+APP_VERSION="3.1.1"
 DEBUG=false
 SECRET_KEY="your-secret-key-here"
 
@@ -424,7 +424,7 @@ engine = create_engine(
 - `POST /api/auth/refresh` - Token refresh
 - `POST /api/auth/logout` - User logout
 
-### Module Generation (v3.0.0)
+### Module Generation (v3.1.1)
 - `GET /api/module-gen/templates` - List templates
 - `POST /api/module-gen/validate` - Validate specification
 - `POST /api/module-gen/generate` - Generate module
@@ -536,7 +536,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🎯 Roadmap
 
-### v3.1.0 (Upcoming)
+### v3.1.1 (Current)
 - Enhanced module templates
 - Advanced workflow engine
 - Multi-language support
@@ -550,4 +550,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**FBS FastAPI v3.0.0** - Revolutionizing business suite development with automated module generation! 🚀
+**FBS FastAPI v3.1.1** - Revolutionizing business suite development with automated module generation! 🚀

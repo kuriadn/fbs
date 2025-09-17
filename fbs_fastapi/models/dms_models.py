@@ -30,7 +30,7 @@ class ConfidentialityLevel(PyEnum):
 
 # Association table for many-to-many relationship between documents and tags
 document_tags_association = Table(
-    'dms_document_tags',
+    'dms_document_tags_association',
     Base.metadata,
     Column('document_id', Integer, ForeignKey('dms_documents.id'), primary_key=True),
     Column('tag_id', Integer, ForeignKey('dms_document_tags.id'), primary_key=True)
@@ -160,7 +160,7 @@ class DMSDocument(Base):
     solution_name = Column(String(100), nullable=False)
     confidentiality_level = Column(Enum(ConfidentialityLevel), default=ConfidentialityLevel.INTERNAL, nullable=False)
     description = Column(Text, nullable=True)
-    metadata = Column(JSON, default=dict, nullable=False)
+    extra_metadata = Column(JSON, default=dict, nullable=False)
     version = Column(String(20), default='1.0', nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -207,7 +207,7 @@ class DMSDocumentWorkflow(Base):
     status = Column(String(20), default='active', nullable=False)  # active, completed, cancelled
     created_by = Column(String(100), nullable=False)
     solution_name = Column(String(100), nullable=False)
-    metadata = Column(JSON, default=dict, nullable=False)
+    extra_metadata = Column(JSON, default=dict, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -236,7 +236,7 @@ class DMSDocumentApproval(Base):
     approved_at = Column(DateTime(timezone=True), nullable=True)
     due_date = Column(DateTime(timezone=True), nullable=True)
     is_required = Column(Boolean, default=True, nullable=False)
-    metadata = Column(JSON, default=dict, nullable=False)
+    extra_metadata = Column(JSON, default=dict, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 

@@ -18,7 +18,7 @@ class FBSConfig(BaseSettings):
     # APPLICATION SETTINGS
     # ============================================================================
     app_name: str = "FBS - Fayvad Business Suite"
-    app_version: str = "3.1.0"
+    app_version: str = "3.1.1"
     debug: bool = Field(default=False, env="DEBUG")
     secret_key: str = Field(env="SECRET_KEY", json_schema_extra={"description": "Django-compatible secret key"})
 
