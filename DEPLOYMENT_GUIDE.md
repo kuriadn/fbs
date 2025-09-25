@@ -155,23 +155,29 @@ MODULE_OUTPUT_DIR="./generated_modules"
 ```bash
 # Clone repository
 git clone https://github.com/kuriadn/fbs.git
-cd fbs/fbs_fastapi
+cd fbs/fbs_django
 
 # Create virtual environment
 python -m venv venv
 source venv/bin/activate
 
 # Install dependencies
-pip install -r ../requirements.txt
+pip install -r requirements.txt
 pip install -r ../requirements-dev.txt
 
 # Set environment variables
-export DATABASE_URL="postgresql+asyncpg://fbs_user:fbs_password@localhost:5432/fbs_system_db"
+export DJANGO_SETTINGS_MODULE=config.settings
+export DB_NAME="fbs_system_db"
+export DB_USER="fayvad"
+export DB_PASSWORD="MeMiMo@0207"
 export REDIS_URL="redis://localhost:6379/0"
 export SECRET_KEY="your-secret-key"
 
+# Run database migrations
+python manage.py migrate
+
 # Run application
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+python manage.py runserver 0.0.0.0:8000
 ```
 
 ---
